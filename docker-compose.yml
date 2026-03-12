@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: food_db          # 你们的初始数据库名
+      MYSQL_ROOT_PASSWORD: root        # 本地开发密码随便设，简单就好
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql    # 【关键】把容器里的数据存到本地 data 文件夹下
+
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379"
