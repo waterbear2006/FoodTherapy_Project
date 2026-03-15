@@ -1,0 +1,8 @@
+Plaintext
+# 忽略 Python 缓存和虚拟环境
+__pycache__/
+*.py[cod]
+venv/
+.env
+# 忽略本地数据库⽂件（绝对不能传给对⽅！）
+data/
