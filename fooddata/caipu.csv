@@ -1,0 +1,16 @@
+id,name,pinyin_full,pinyin_initial,tags,methods,matches,taboos,constitution
+1,山药小米粥,shanyaoxiaomizhou,syxmz,补气/健脾,山药去皮切块与小米同煮成粥,小米/红枣/枸杞,萝卜/甘遂,气虚质/脾虚质
+2,薏米茯苓冬瓜汤,yimifulingdongguatang,ymfldgt,祛湿/健脾,薏米、茯苓、冬瓜切块同煮,红豆/冰糖/姜片,孕妇慎用,湿热质/痰湿质
+3,枸杞百合银耳羹,gouqibaiheyinergeng,gqbhyeg,滋阴/润肺,银耳泡发后与枸杞、百合同炖,冰糖/梨/莲子,脾胃虚寒慎用,阴虚质/气郁质
+4,红枣桂圆枸杞茶,hongzaoguiyuangouqicha,hzgygqc,补血/安神,红枣、桂圆、枸杞沸水冲泡或煮,红糖/生姜,湿热质慎用,气虚质/血虚质
+5,绿豆百合莲子汤,lvdoubaihelianzi汤,ldbhlzt,清热/解毒,绿豆、百合、莲子同煮至开花加冰糖,冰糖/冬瓜/金银花,脾胃虚寒慎用,湿热质/阴虚质
+6,当归生姜羊肉汤,dangguishengjiangyangroutang,dgsjyrt,温阳/补血,当归、生姜、羊肉同炖,枸杞/红枣/山药,醋/西瓜,阳虚质/血虚质
+7,冬瓜薏米排骨汤,dongguayimipaigutang,dgympg t,清热/祛湿,冬瓜、薏米、排骨同煮,茯苓/姜片/红枣,孕妇慎用,湿热质/痰湿质
+8,枸杞菊花茶,gouqijuhuacha,gqjhc,明目/养肝,枸杞、菊花沸水冲泡,决明子/蜂蜜/金银花,脾胃虚寒慎用,阴虚质/气郁质
+9,南瓜小米粥,nanguaxiaomizhou,ngxmz,健脾/养胃,南瓜切块与小米同煮成粥,红枣/山药/枸杞,羊肉/菠菜,脾虚质/气虚质
+10,芡实山药粥,Qianshishanyaizhou,qssyz,健脾/固肾,芡实、山药、大米同煮成粥,莲子/茯苓/红枣,生冷油腻慎用,脾虚质/肾虚质
+11,白萝卜梨汤,bailuobolitang,blblt,清热/润肺,白萝卜、梨切块同煮,蜂蜜/姜片/百合,人参/党参慎用,湿热质/阴虚质
+12,黑豆黑芝麻糊,heidouheizhimahu,hdhzmh,补血/滋阴,黑豆、黑芝麻磨粉后冲调,核桃/枸杞/红枣,鸡肉/鸭肉慎用,血虚质/阴虚质
+13,栗子鸡汤,lizijitang,lzjt,温阳/健脾,栗子、鸡肉、姜片同炖,红枣/枸杞/山药,牛肉/杏仁慎用,阳虚质/脾虚质
+14,芹菜百合炒虾仁,qincaibaihechaoxiaren,qcbhcsxr,清热/滋阴,芹菜、百合、虾仁清炒,枸杞/姜片/蒜末,黄瓜/蛤蜊慎用,湿热质/阴虚质
+15,茯苓莲子粥,fulinglianzi zhou,fllzz,健脾/安神,茯苓、莲子、大米同煮成粥,山药/薏米/红枣,醋/浓茶慎用,脾虚质/失眠质
