@@ -1,0 +1,21 @@
+# --- 核心 Web 框架 ---
+fastapi>=0.100.0        # 用于编写路由模块 api/*.py [cite: 7, 44]
+uvicorn[standard]       # ASGI 服务器，用于在 main.py 中拉起服务 [cite: 43]
+
+# --- 数据校验与序列化 ---
+pydantic>=2.0.0         # 模块五 OOP 封装及 JSON Schema 文档生成 [cite: 36, 51, 52]
+
+# --- 数据库与持久化 (针对 SQLite) ---
+sqlalchemy>=2.0.0       # 用于操作 data/app.db 替代 MySQL
+aiosqlite               # 异步驱动支持
+
+# --- AI 与网络请求 ---
+httpx                   # 用于在 api/search.py 中调用大模型 API [cite: 23, 38]
+
+# --- 安全与鉴权 ---
+python-jose[cryptography] # 模块二中的 JWT 鉴权实现 [cite: 14]
+passlib[bcrypt]          # 密码加密存储
+
+
+python-multipart        # 处理前端表单上传
+python-dotenv           # 管理 API Key 等环境变量
