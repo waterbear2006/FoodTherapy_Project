@@ -1,0 +1,113 @@
+{
+  "version": "1.1",
+  "questions": [
+    {
+      "id": 1,
+      "text": "您精力充沛吗？（注：此题为反向计分或作为平和质基准）",
+      "category": "平和质",
+      "options": [
+        {"text": "总是", "score": 5},
+        {"text": "经常", "score": 4},
+        {"text": "有时", "score": 3},
+        {"text": "很少", "score": 2},
+        {"text": "根本不", "score": 1}
+      ]
+    },
+    {
+      "id": 2,
+      "text": "您容易疲乏吗？",
+      "category": "气虚质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    },
+    {
+      "id": 3,
+      "text": "您手脚发凉吗？",
+      "category": "阳虚质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    },
+    {
+      "id": 4,
+      "text": "您手脚心发热吗？",
+      "category": "阴虚质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    },
+    {
+      "id": 5,
+      "text": "您感觉身体沉重不轻松或不爽快吗？",
+      "category": "痰湿质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    },
+    {
+      "id": 6,
+      "text": "您面部或鼻部有油腻感或者易生痤疮吗？",
+      "category": "湿热质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    },
+    {
+      "id": 7,
+      "text": "您的皮肤在不知不觉中会出现青紫瘀斑吗？",
+      "category": "血瘀质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    },
+    {
+      "id": 8,
+      "text": "您容易精神紧张、焦虑不安吗？",
+      "category": "气郁质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    },
+    {
+      "id": 9,
+      "text": "您容易过敏（对药物、食物、气味、花粉等）吗？",
+      "category": "特禀质",
+      "options": [
+        {"text": "没有", "score": 1},
+        {"text": "很少", "score": 2},
+        {"text": "有时", "score": 3},
+        {"text": "经常", "score": 4},
+        {"text": "总是", "score": 5}
+      ]
+    }
+  ]
+}

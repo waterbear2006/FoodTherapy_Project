@@ -1,31 +1,62 @@
-import json
+"""
+[System Preloader] 系统预加载器
+职责：读取 data/ 中的 CSV 数据，并将其装载至内存中的 Graph、Trie 和 HashIndex。
+内容：实现“系统预热 (Warm-up)”，确保 API 响应为毫秒级。
+"""
+import csv
+from pathlib import Path
+
+# 导入数据结构
 from core.structures.trie import Trie
 from core.structures.hash_index import HashIndex
 
-# 全局单例实例，供 api 层调用
-ingredient_db = {} 
+# 1. 初始化全局单例实例 (Global Singletons)
+# 这样其他模块 (如 api/recipes.py) 直接 import 就能用
 ingredient_trie = Trie()
-recipe_inverted_index = HashIndex()
+recipe_hash_index = HashIndex()
+ingredient_db = {}  # 全局食材数据库
 
 def load_all_data():
-    """从 JSON 种子数据预热内存结构"""
+    """系统启动时调用的主加载函数"""
+    base_path = Path(__file__).resolve().parent.parent / "data"
+    
+    # --- 加载食材数据 ---
+    ingredients_file = base_path / "shicai .csv"
+    
     try:
-        with open("data/ingredients.json", "r", encoding="utf-8") as f:
-            raw_data = json.load(f) [cite: 8]
-            
-        for item in raw_data:
-            idx = item["id"]
-            # 1. 存入基础详情库 [cite: 8]
-            ingredient_db[idx] = item
-            
-            # 2. 灌入对方写的 Trie 树（用于模块三前缀搜索） [cite: 20]
-            ingredient_trie.insert(item["name"], idx)
-            
-            # 3. 灌入对方写的倒排索引（用于模块四反推） [cite: 15, 30]
-            if "related_recipes" in item:
-                for r_id in item["related_recipes"]:
-                    recipe_inverted_index.add_mapping(idx, r_id)
+        with open(ingredients_file, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # 构建食材对象
+                ingredient = {
+                    "id": int(row["id"]),
+                    "name": row["name"],
+                    "tag": row["tag"],
+                    "effect": row["effect"],
+                    "suitable": row["suitable"],
+                    "avoid": row["avoid"],
+                    "methods": row["methods"],
+                    "images": row["images"],
+                    "category": None,  # 可根据需要补充
+                    "property": None,  # 可根据需要补充
+                    "description": None,  # 可根据需要补充
+                    "related_recipes": []  # 可根据需要补充
+                }
+                
+                # 添加到全局食材数据库
+                ingredient_db[int(row["id"])] = ingredient
+                
+                # B. 装载到前缀树 (Trie) -> 用于搜索框自动补全
+                ingredient_trie.insert(row["name"])
+                
+                # C. 装载到哈希索引 (HashIndex) -> 用于 O(1) 极速反查
+                recipe_hash_index.add(row["name"], row["id"])
         
-        print(f"✅ [Preloader] 成功加载 {len(ingredient_db)} 种食材并构建索引")
+        print(f"🚀 [Preloader] 成功加载 {len(ingredient_db)} 种食材数据到内存结构。")
+
+    except FileNotFoundError:
+        print(f"⚠️ [Preloader] 警告：未找到数据文件 {ingredients_file}，算法实例为空。")
     except Exception as e:
-        print(f"❌ [Preloader] 数据预热失败: {e}")
+        print(f"❌ [Preloader] 发生错误: {e}")
+
+# 在模块被导入时，可以手动调用一次，或者在 main.py 启动时调用

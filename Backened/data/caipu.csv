@@ -1,0 +1,16 @@
+id,name,ingredients,effect,suitable,steps,images
+1,山药小米粥,山药、小米,补气、健脾,气虚质、脾虚质,山药去皮切块与小米同煮成粥,shanyaoxiaomizhou.png
+2,薏米茯苓冬瓜汤,薏米、茯苓、冬瓜,祛湿、健脾,湿热质、痰湿质,薏米、茯苓、冬瓜切块同煮,yimifulingdongguatang.png
+3,枸杞百合银耳羹,银耳、枸杞、百合,滋阴、润肺,阴虚质、气郁质,银耳泡发后与枸杞、百合同炖,gouqibaiheyinergeng.png
+4,红枣桂圆枸杞茶,红枣、桂圆、枸杞,补血、安神,气虚质、血虚质,红枣、桂圆、枸杞沸水冲泡或煮,hongzaoguiyuangouqicha.png
+5,绿豆百合莲子汤,绿豆、百合、莲子,清热、解毒,湿热质、阴虚质,绿豆、百合、莲子同煮至开花加冰糖,lvdoubaihelianzi.png
+6,当归生姜羊肉汤,当归、生姜、羊肉,温阳、补血,阳虚质、血虚质,当归、生姜、羊肉同炖,dangguishengjiangyangroutang.png
+7,冬瓜薏米排骨汤,冬瓜、薏米、排骨,清热、祛湿,湿热质、痰湿质,冬瓜、薏米、排骨同煮,dongguayimipaigutang.png
+8,枸杞菊花茶,枸杞、菊花,明目、养肝,阴虚质、气郁质,枸杞、菊花沸水冲泡,gouqijuhuacha.png
+9,南瓜小米粥,南瓜、小米,健脾、养胃,脾虚质、气虚质,南瓜切块与小米同煮成粥,nanguaxiaomizhou.png
+10,芡实山药粥,芡实、山药、大米,健脾、固肾,脾虚质、肾虚质,芡实、山药、大米同煮成粥,qianshishanyaizhou.png
+11,白萝卜梨汤,白萝卜、梨,清热、润肺,湿热质、阴虚质,白萝卜、梨切块同煮,bailuobolitang.png
+12,黑豆黑芝麻糊,黑豆、黑芝麻,补血、滋阴,血虚质、阴虚质,黑豆、黑芝麻磨粉后冲调,heidouheizhimahu.png
+13,栗子鸡汤,栗子、鸡肉、姜片,温阳、健脾,阳虚质、脾虚质,栗子、鸡肉、姜片同炖,lizijitang.png
+14,芹菜百合炒虾仁,芹菜、百合、虾仁,清热、滋阴,湿热质、阴虚质,芹菜、百合、虾仁清炒,qincaibaihechaoxiaren.png
+15,茯苓莲子粥,茯苓、莲子、大米,健脾、安神,脾虚质、失眠质,茯苓、莲子、大米同煮成粥,fulinglianzi.png
