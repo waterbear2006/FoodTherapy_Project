@@ -11,6 +11,7 @@ aiosqlite               # 异步驱动支持
 
 # --- AI 与网络请求 ---
 httpx                   # 用于在 api/search.py 中调用大模型 API [cite: 23, 38]
+dashscope               # 模块三中的大模型 API 客户端库 [cite: 23]
 
 # --- 安全与鉴权 ---
 python-jose[cryptography] # 模块二中的 JWT 鉴权实现 [cite: 14]
