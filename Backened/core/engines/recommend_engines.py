@@ -1,38 +1,19 @@
 """
-[Business Engine] 智能推荐调度引擎 (AI 增强版)
+[Business Engine] 智能推荐调度引擎 (规则版)
 职责：根据用户体质、当前节气和季节，生成个性化的食疗推荐方案。
-实施功能：
-- 获取当前节气和季节
-- 根据体质、节气和季节生成推荐
-- 根据年龄和性别调整推荐
-- 调用 AI 生成推荐理由
-- 组装并返回推荐结果
-- 支持默认推荐理由，当 AI API 不可用时使用
 """
 import os
-import json
-import asyncio
+import sys
 from typing import Optional, List
 from datetime import datetime
-from openai import AsyncOpenAI
-from dotenv import load_dotenv
-from models.recommendation import RecommendationItem
 
-load_dotenv() # 加载 .env 里的 API_KEY
+# 将项目根目录添加到 sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from models.recommendation import RecommendationItem
 
 class RecommendEngine:
     def __init__(self):
-        # 自动读取环境变量中的 API_KEY
-        # 如果是 DeepSeek，base_url 换成 https://api.deepseek.com
-        api_key = os.getenv("AI_API_KEY")
-        if api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url=os.getenv("AI_BASE_URL", "https://api.openai.com/v1")
-            )
-        else:
-            self.client = None
-            print("⚠️ [RecommendEngine] 警告：未设置 AI_API_KEY 环境变量，将使用默认推荐理由")
         # 24节气列表及对应日期范围（考虑到每年的微小变化）
         self.solar_terms = [
             {"name": "立春", "start_date": "02-03", "end_date": "02-17"},
@@ -302,39 +283,12 @@ class RecommendEngine:
                 return season
         return "春季" # 默认返回春季
 
-    async def _get_ai_reasons(self, constitution: str, solar_term: str, season: str, items: list) -> dict:
-        """
-        核心 AI 调用逻辑：批量生成推荐理由
-        """
-        # 如果没有设置 API 密钥，直接返回默认理由
-        if not self.client:
-            return {item: "符合您的健康体质、当前节气和季节" for item in items} # 兜底逻辑
-        
-        # 1. 构造 Prompt
-        items_str = ", ".join(items)
-        prompt = f"""
-        用户体质: {constitution}
-        当前节气: {solar_term}
-        当前季节: {season}
-        推荐项目: [{items_str}]
-        任务: 请分别为每个项目写一段15字以内的中医原理解释，说明为什么适合该体质、当前节气和季节。
-        要求: 严禁废话，直接返回 JSON 格式，格式如下: 
-        {{"项目名": "理由", ...}}
-        """
-
-        try:
-            response = await self.client.chat.completions.create(
-                model="deepseek-chat", # 或 gpt-4o-mini
-                messages=[
-                    {"role": "system", "content": "你是一位精通《黄帝内经》和中医季节性养生的专家，熟悉24节气对人体的影响。"},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={"type": "json_object"} # 强制返回 JSON
-            )
-            return json.loads(response.choices[0].message.content)
-        except Exception as e:
-            print(f"AI 接口调用失败: {e}")
-            return {item: "符合您的健康体质、当前节气和季节" for item in items} # 兜底逻辑
+    def _build_rule_reasons(self, constitution: str, solar_term: str, season: str, items: list) -> dict:
+        """基于规则生成推荐理由，替代 AI 调用。"""
+        return {
+            item: f"匹配{constitution}，且适合{solar_term}({season})调理"
+            for item in items
+        }
 
     async def get_smart_recommendations(self, user_id: str, constitution: str, age: Optional[int] = None, gender: Optional[str] = None):
         """
@@ -395,8 +349,8 @@ class RecommendEngine:
         # 3. 提取所有项目，准备“打包问 AI”
         all_items = raw_data["therapies"] + raw_data["recipes"] + raw_data["ingredients"]
         
-        # 4. 异步调用 AI 获取所有理由
-        reasons_map = await self._get_ai_reasons(constitution, solar_term, season, all_items)
+        # 4. 规则生成推荐理由（无 AI 依赖）
+        reasons_map = self._build_rule_reasons(constitution, solar_term, season, all_items)
 
         # 5. 组装最终结果
         def build_items(category_list):

@@ -4,7 +4,11 @@
 内容：实现“系统预热 (Warm-up)”，确保 API 响应为毫秒级。
 """
 import csv
-from pathlib import Path
+import sys
+import os
+
+# 将项目根目录添加到 sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # 导入数据结构
 from core.structures.trie import Trie
@@ -16,12 +20,24 @@ ingredient_trie = Trie()
 recipe_hash_index = HashIndex()
 ingredient_db = {}  # 全局食材数据库
 
+def _resolve_existing_data_file(base_path: str, candidates: list[str]) -> str:
+    for filename in candidates:
+        full_path = os.path.join(base_path, filename)
+        if os.path.exists(full_path):
+            return full_path
+    return os.path.join(base_path, candidates[0])
+
 def load_all_data():
     """系统启动时调用的主加载函数"""
-    base_path = Path(__file__).resolve().parent.parent / "data"
+    # 获取 Backened 目录的绝对路径
+    backened_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    base_path = os.path.join(backened_dir, 'data')
     
     # --- 加载食材数据 ---
-    ingredients_file = base_path / "shicai .csv"
+    ingredients_file = _resolve_existing_data_file(
+        base_path,
+        ["shicai.csv", "shicai .csv"],
+    )
     
     try:
         with open(ingredients_file, "r", encoding="utf-8") as f:
@@ -60,3 +76,5 @@ def load_all_data():
         print(f"❌ [Preloader] 发生错误: {e}")
 
 # 在模块被导入时，可以手动调用一次，或者在 main.py 启动时调用
+if __name__ == "__main__":
+    load_all_data()

@@ -5,13 +5,23 @@
 """
 
 from fastapi import FastAPI
-from api import quiz, ingredients, search, recommend, therapy, recipes  # 导入路由模块
+from fastapi.middleware.cors import CORSMiddleware
+from api import quiz, ingredients, search, recommend, therapy, recipes, daily_report  # 导入路由模块
 from core.preloader import load_all_data  # 导入数据加载函数
 
 # 启动时加载数据
 load_all_data()
 
 app = FastAPI(title="食疗养生推荐系统 API", version="1.0.0")
+
+# 前后端联调阶段放开 CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 将路由注册到总 APP 上
 app.include_router(quiz.router, prefix="/api")  # 体质测试路由
@@ -20,6 +30,7 @@ app.include_router(search.router)  # 搜索模块路由
 app.include_router(recommend.router)  # 智能推荐路由
 app.include_router(therapy.router)  # 食疗库路由
 app.include_router(recipes.router)  # 菜谱模块路由
+app.include_router(daily_report.router)  # 每日报告路由
 
 @app.get("/")
 async def root():

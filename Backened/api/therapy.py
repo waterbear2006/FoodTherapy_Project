@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/therapy", tags=["食疗库模块"])
 therapy_service = TherapyService()
 
 # 加载食疗数据
-data_path = Path(__file__).resolve().parent.parent / "data" / "shicai.csv"
+data_path = Path(__file__).resolve().parent.parent / "data" / "caipu.csv"
 if data_path.exists():
     loaded_count = therapy_service.load_data(data_path)
     print(f"🚀 [Therapy] 成功加载 {loaded_count} 条食疗数据")
