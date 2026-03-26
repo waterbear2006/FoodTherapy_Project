@@ -4,12 +4,18 @@
 """
 from typing import List, Optional, Set, Dict, Any
 
+<<<<<<< HEAD
 from models.therapy import TherapyDetail
 from core.structures.trie import Trie
 from core.structures.hash_index import HashIndex
 from core.structures.lru_cache import LRUCache
 from core.structures.graph import AdjacencyGraph
 
+=======
+from core.foodtherapy.models import TherapyDetail
+from core.structures import Trie, HashIndex, LRUCache, AdjacencyGraph
+from core.algorithms import KMPMatcher, dfs_visit, dfs_paths
+>>>>>>> 5509c1398c0685e011f840fcbbe6dd0969d7e3cb
 
 
 class FoodTherapyIndex:
@@ -56,11 +62,19 @@ class FoodTherapyIndex:
 
     def full_text_search(self, keyword: str, fields: Optional[List[str]] = None) -> List[TherapyDetail]:
         """
+<<<<<<< HEAD
         全文检索
+=======
+        KMP 全文检索
+>>>>>>> 5509c1398c0685e011f840fcbbe6dd0969d7e3cb
         在 methods, matches, taboos 等字段中搜索 keyword
         """
         if not keyword.strip():
             return []
+<<<<<<< HEAD
+=======
+        kmp = KMPMatcher(keyword)
+>>>>>>> 5509c1398c0685e011f840fcbbe6dd0969d7e3cb
         default_fields = ["methods", "matches", "taboos", "tags"]
         fields = fields or default_fields
         result_ids: Set[int] = set()
@@ -70,7 +84,11 @@ class FoodTherapyIndex:
                 if val is None:
                     continue
                 text = val if isinstance(val, str) else ",".join(val) if isinstance(val, list) else str(val)
+<<<<<<< HEAD
                 if keyword in text:
+=======
+                if kmp.contains(text):
+>>>>>>> 5509c1398c0685e011f840fcbbe6dd0969d7e3cb
                     result_ids.add(item.id)
                     break
         return [self._storage[i] for i in result_ids]
