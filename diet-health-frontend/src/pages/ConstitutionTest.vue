@@ -6,10 +6,6 @@ import { getQuizQuestions, submitQuizAnswers } from '@/api/mock'
 const router = useRouter()
 
 const questions = ref([])
-const options = [
-  { value: '是', label: '是' },
-  { value: '否', label: '否' }
-]
 
 const currentIndex = ref(0)
 const answers = ref({})
@@ -36,6 +32,67 @@ const finished = computed(() => {
   return apiResult.value !== null && currentIndex.value >= questions.value.length
 })
 const hasQuestions = computed(() => questions.value.length > 0)
+const canSubmit = computed(() => {
+  return Object.keys(answers.value).length === questions.value.length && questions.value.length > 0
+})
+const showFinishButton = computed(() => {
+  if (!questions.value.length) return false
+  const isLastQuestion = currentIndex.value === questions.value.length - 1
+  const currentQuestionId = String(currentQuestion.value?.id || '')
+  const hasCurrentAnswer = !!answers.value[currentQuestionId]
+  return isLastQuestion && hasCurrentAnswer
+})
+const isLastQuestion = computed(() => {
+  return questions.value.length > 0 && currentIndex.value === questions.value.length - 1
+})
+const hasCurrentAnswer = computed(() => {
+  const currentQuestionId = String(currentQuestion.value?.id || '')
+  return !!answers.value[currentQuestionId]
+})
+
+const radarOrder = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质']
+const radarChart = computed(() => {
+  if (!result.value?.scores) return null
+
+  const center = 140
+  const radius = 112
+  const levels = [20, 40, 60, 80, 100]
+  const labels = radarOrder
+  const total = labels.length
+  const angleStep = (Math.PI * 2) / total
+  // 仅用于雷达图着色范围的视觉放大，不影响实际分值显示
+  const displayScale = 4.2
+  const minVisibleRatio = 0.18
+
+  const toPoint = (value, index, r = radius, useScaledValue = false) => {
+    const angle = -Math.PI / 2 + index * angleStep
+    const rawValue = Math.max(0, Math.min(100, Number(value) || 0))
+    const visualValue = useScaledValue ? Math.min(100, rawValue * displayScale) : rawValue
+    const ratio = useScaledValue
+      ? Math.max(minVisibleRatio, visualValue / 100)
+      : (visualValue / 100)
+    const currentRadius = r * ratio
+    const x = center + currentRadius * Math.cos(angle)
+    const y = center + currentRadius * Math.sin(angle)
+    return `${x},${y}`
+  }
+
+  const dataPoints = labels.map((name, idx) => toPoint(result.value.scores[name] || 0, idx, radius, true))
+  const axisPoints = labels.map((_, idx) => toPoint(100, idx))
+  const labelPoints = labels.map((_, idx) => {
+    const point = toPoint(100, idx, radius + 16).split(',')
+    return { x: Number(point[0]), y: Number(point[1]) }
+  })
+  const levelPolygons = levels.map(level => labels.map((_, idx) => toPoint(level, idx)).join(' '))
+
+  return {
+    center,
+    axisPoints,
+    labelPoints,
+    levelPolygons,
+    dataPolygon: dataPoints.join(' ')
+  }
+})
 
 const result = computed(() => {
   if (!apiResult.value) return null
@@ -151,9 +208,13 @@ async function loadQuestions() {
   }
 }
 
-function choose(optionValue) {
+function choose(option) {
   const questionId = String(currentQuestion.value.id)
-  answers.value[questionId] = optionValue
+  // 存储纯对象，确保每题选中态稳定可追踪
+  answers.value[questionId] = {
+    text: option.text,
+    score: option.score
+  }
   
   if (currentIndex.value < questions.value.length - 1) {
     currentIndex.value += 1
@@ -161,15 +222,37 @@ function choose(optionValue) {
     // 最后一题，显示提交按钮
     showSubmitButton.value = true
   }
+  
+  // 防止历史结果残留影响最后一题按钮显示（在设置完当前答案后执行）
+  if (apiResult.value) {
+    apiResult.value = null
+  }
 }
 
 function previous() {
   if (currentIndex.value > 0) {
     currentIndex.value -= 1
+    showSubmitButton.value = false
+    // 确保重置 apiResult，避免历史结果影响按钮显示
+    if (apiResult.value) {
+      apiResult.value = null
+    }
+  } else {
+    // 如果在第一题点击返回，重置到用户信息表单
+    showUserForm.value = true
+    showSubmitButton.value = false
+    apiResult.value = null
   }
 }
 
 async function submitAnswers() {
+  // 检查是否有当前答案
+  const currentQuestionId = String(currentQuestion.value?.id || '')
+  if (!answers.value[currentQuestionId]) {
+    alert('请先选择答案')
+    return
+  }
+  
   loading.value = true
   try {
     console.log('📤 开始提交答案...')
@@ -309,6 +392,12 @@ function startTest() {
     alert('请输入有效的体重（20-300kg）')
     return
   }
+  // 每次开始测试都重置状态，避免上一轮结果干扰显示逻辑
+  currentIndex.value = 0
+  answers.value = {}
+  apiResult.value = null
+  showReport.value = false
+  showSubmitButton.value = false
   showUserForm.value = false
 }
 
@@ -316,6 +405,10 @@ function restart() {
   currentIndex.value = 0
   answers.value = {}
   apiResult.value = null
+  showSubmitButton.value = false
+  showReport.value = false
+  // 确保重置所有状态，避免历史结果影响第二次测试
+  showUserForm.value = true
 }
 
 onMounted(() => {
@@ -480,26 +573,26 @@ onMounted(() => {
         </p>
         <div class="option-list">
           <button
-            v-for="opt in options"
-            :key="opt.label"
+            v-for="opt in (currentQuestion?.options || [])"
+            :key="`${opt.text}-${opt.score}`"
             type="button"
             class="option-btn"
-            :class="{ selected: answers[String(currentQuestion?.id)] === opt.value }"
-            @click="choose(opt.value)"
+            :class="{ selected: answers[String(currentQuestion?.id)]?.score === opt.score }"
+            @click="choose(opt)"
           >
-            {{ opt.label }}
+            {{ opt.text }}
           </button>
         </div>
         
-        <!-- 提交按钮 - 只在最后一题完成且未提交时显示 -->
-        <div v-if="showSubmitButton && !apiResult" class="submit-section">
+        <!-- 第9题固定显示结束按钮 -->
+        <div v-if="isLastQuestion && hasCurrentAnswer" class="submit-section">
           <button 
             class="btn-submit" 
             type="button" 
             @click="submitAnswers"
             :disabled="loading"
           >
-            {{ loading ? '提交中...' : '✅ 提交并查看报告' }}
+            {{ loading ? '提交中...' : '✅ 完成测试' }}
           </button>
         </div>
         
@@ -642,24 +735,45 @@ onMounted(() => {
             </div>
           </section>
 
-          <!-- 九维体质得分雷达图数据 -->
+          <!-- 九维体质得分雷达图 -->
           <section v-if="result.scores" class="report-section">
             <h4 class="section-title">
               <span class="title-icon">📊</span>
               九维体质得分
             </h4>
-            <div class="scores-grid">
-              <div 
-                v-for="(score, key) in result.scores" 
-                :key="key"
-                class="score-item"
-                :class="{ 'highlight-score': score === Math.max(...Object.values(result.scores)) }"
-              >
-                <span class="score-label">{{ key.replace('体质', '') }}</span>
-                <div class="score-bar-wrap">
-                  <div class="score-bar" :style="{ width: (score / 100 * 100) + '%' }"></div>
+            <div class="radar-wrap" v-if="radarChart">
+              <svg viewBox="0 0 280 280" class="radar-svg" aria-label="九维体质雷达图">
+                <polygon
+                  v-for="(polygon, idx) in radarChart.levelPolygons"
+                  :key="`level-${idx}`"
+                  :points="polygon"
+                  class="radar-level"
+                />
+                <line
+                  v-for="(point, idx) in radarChart.axisPoints"
+                  :key="`axis-${idx}`"
+                  :x1="radarChart.center"
+                  :y1="radarChart.center"
+                  :x2="Number(point.split(',')[0])"
+                  :y2="Number(point.split(',')[1])"
+                  class="radar-axis"
+                />
+                <polygon :points="radarChart.dataPolygon" class="radar-data" />
+                <text
+                  v-for="(label, idx) in radarOrder"
+                  :key="`label-${idx}`"
+                  :x="radarChart.labelPoints[idx].x"
+                  :y="radarChart.labelPoints[idx].y"
+                  class="radar-label"
+                >
+                  {{ label.replace('体质', '') }}
+                </text>
+              </svg>
+              <div class="radar-legend">
+                <div v-for="key in radarOrder" :key="key" class="legend-item">
+                  <span class="legend-name">{{ key }}</span>
+                  <span class="legend-score">{{ Number(result.scores[key] || 0).toFixed(1) }}分</span>
                 </div>
-                <span class="score-value">{{ score }}分</span>
               </div>
             </div>
           </section>
@@ -1298,54 +1412,69 @@ onMounted(() => {
   color: #333;
 }
 
-/* 得分网格 */
-.scores-grid {
+/* 雷达图 */
+.radar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.radar-svg {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  display: block;
+}
+
+.radar-level {
+  fill: rgba(26, 163, 157, 0.03);
+  stroke: rgba(26, 163, 157, 0.2);
+  stroke-width: 1;
+}
+
+.radar-axis {
+  stroke: rgba(26, 163, 157, 0.18);
+  stroke-width: 1;
+}
+
+.radar-data {
+  fill: rgba(26, 163, 157, 0.24);
+  stroke: #1aa39d;
+  stroke-width: 2;
+}
+
+.radar-label {
+  font-size: 11px;
+  fill: #4b5563;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.radar-legend {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 10px;
 }
 
-.score-item {
-  padding: 12px;
+.legend-item {
   background: #f8f9fa;
-  border-radius: 8px;
   border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 8px 10px;
 }
 
-.score-item.highlight-score {
-  background: linear-gradient(135deg, rgba(26, 163, 157, 0.15) 0%, rgba(39, 179, 168, 0.15) 100%);
-  border-color: rgba(26, 163, 157, 0.3);
-}
-
-.score-label {
+.legend-name {
   display: block;
   font-size: 12px;
   color: #666;
-  margin-bottom: 8px;
-  font-weight: 500;
 }
 
-.score-bar-wrap {
-  height: 6px;
-  background: #e8e8e8;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.score-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #1aa39d 0%, #27b3a8 100%);
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-
-.score-value {
+.legend-score {
   display: block;
+  margin-top: 2px;
   font-size: 13px;
   font-weight: 700;
   color: #1aa39d;
-  text-align: right;
 }
 
 /* 用户信息网格 */

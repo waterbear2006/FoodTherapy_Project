@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
   ingredient: { type: Object, default: null },
@@ -7,13 +7,31 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+const imageLoadError = ref(false)
+
+watch(
+  () => props.ingredient,
+  () => {
+    imageLoadError.value = false
+  }
+)
 
 // 图片 URL
 const imageUrl = computed(() => {
-  if (!props.ingredient?.images) return ''
-  // 确保图片路径正确拼接
-  const imageName = props.ingredient.images.trim()
-  return `http://127.0.0.1:8001/data/Shicaiimages/${imageName}`
+  if (!props.ingredient) return ''
+
+  // 兼容列表中已拼好的 image 字段
+  if (props.ingredient.image) {
+    return String(props.ingredient.image).trim()
+  }
+
+  // 兼容原始 images 文件名字段
+  if (props.ingredient.images) {
+    const imageName = String(props.ingredient.images).trim()
+    return `http://127.0.0.1:8001/data/Shicaiimages/${imageName}`
+  }
+
+  return ''
 })
 
 // 功效标签数组
@@ -43,6 +61,10 @@ const methodsList = computed(() => {
 function handleClose() {
   emit('close')
 }
+
+function handleImageError() {
+  imageLoadError.value = true
+}
 </script>
 
 <template>
@@ -54,11 +76,11 @@ function handleClose() {
         <!-- 图片区域 -->
         <div class="image-section">
           <img 
-            v-if="imageUrl" 
+            v-if="imageUrl && !imageLoadError" 
             :src="imageUrl" 
             :alt="ingredient?.name"
             class="detail-image"
-            @error="$event.target.style.display='none'"
+            @error="handleImageError"
           />
           <div v-else class="image-placeholder">🌿</div>
         </div>

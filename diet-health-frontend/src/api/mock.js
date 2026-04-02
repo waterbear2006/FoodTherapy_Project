@@ -321,7 +321,13 @@ export const getQuizQuestions = async () => {
     return questions.map((q, idx) => ({
       id: q.id || idx + 1,
       question: q.text || q.question,
-      options: q.options || [{ text: '是' }, { text: '否' }]
+      category: q.category || '平和质',
+      options: Array.isArray(q.options) && q.options.length
+        ? q.options.map(opt => ({
+            text: opt.text,
+            score: Number(opt.score) || 1
+          }))
+        : [{ text: '有时', score: 3 }]
     }))
   } catch (error) {
     console.error('获取测试题目失败:', error)
@@ -339,18 +345,15 @@ export const submitQuizAnswers = async (answers) => {
     const questions = await getQuizQuestions()
     console.log('📋 题目列表:', questions)
     
-    // 将答案转换为后端需要的格式
+    // 将答案转换为后端需要的格式（按题目真实 category + 选项 score 计分）
     const formattedAnswers = Object.keys(answers).map(questionId => {
       const question = questions.find(q => String(q.id) === String(questionId))
       const answerValue = answers[questionId]
-      
-      // 根据答案值（是/否）转换为分数（1-5）
-      let score
-      if (answerValue === '是') {
-        score = 5
-      } else {
-        score = 1
-      }
+
+      // 兼容新老格式：新格式是 { text, score }，老格式可能是 "是"/"否"
+      const score = typeof answerValue === 'object' && answerValue !== null
+        ? (Number(answerValue.score) || 1)
+        : (answerValue === '是' ? 5 : 1)
       
       return {
         category: question?.category || '平和质',
@@ -487,6 +490,63 @@ export const getHealthArchive = async (userId) => {
   } catch (error) {
     console.error('获取健康档案失败:', error)
     return null
+  }
+}
+
+// 保存健康档案到后端（模拟实现，实际保存到 localStorage）
+export const saveHealthArchive = async (healthData) => {
+  try {
+    console.log('💾 模拟保存健康档案到后端:', healthData)
+    
+    // 模拟 API 调用延迟
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // 获取现有的健康档案
+    const existingArchive = await getHealthArchive()
+    let archive = existingArchive || []
+    
+    if (!Array.isArray(archive)) {
+      archive = []
+    }
+    
+    // 添加新的健康档案记录
+    const newRecord = {
+      id: healthData.user_id || 'user_' + Date.now(),
+      constitution: healthData.constitution || '平和质',
+      score: healthData.score || 85,
+      symptoms: healthData.symptoms || '',
+      height: healthData.height || 0,
+      weight: healthData.weight || 0,
+      age: healthData.age || 0,
+      gender: healthData.gender || '未知',
+      sleep: healthData.sleep || '',
+      water: healthData.water || '',
+      steps: healthData.steps || '',
+      heartRate: healthData.heartRate || '',
+      lastUpdated: healthData.lastUpdated || new Date().toISOString(),
+      timestamp: new Date().toISOString()
+    }
+    
+    // 将新记录添加到数组开头
+    archive.unshift(newRecord)
+    
+    // 保存回 localStorage（最多保留 50 条记录）
+    const maxRecords = 50
+    if (archive.length > maxRecords) {
+      archive = archive.slice(0, maxRecords)
+    }
+    
+    localStorage.setItem('healthArchive', JSON.stringify(archive))
+    
+    console.log('✅ 健康档案保存成功')
+    return {
+      success: true,
+      message: '健康档案保存成功',
+      data: newRecord
+    }
+  } catch (error) {
+    console.error('保存健康档案失败:', error)
+    throw error
   }
 }
 

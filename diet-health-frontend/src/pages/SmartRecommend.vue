@@ -13,12 +13,14 @@ const recipe = ref(null)
 const ingredients = ref([])
 const loading = ref(true)
 
-// 获取疗法相关图片（使用可靠的图片源）
-function getTherapyImage(therapyName) {
-  // 由于 Unsplash 图片可能加载失败，这里返回空字符串
-  // TherapyCard 组件会在图片加载失败时显示 emoji 占位符
-  // 根据疗法类型返回不同的占位符提示
-  return ''
+function buildRecipeReason(baseReason, context) {
+  const core = baseReason || '这道菜整体偏温和，适合作为近期日常调理主菜。'
+  return `${core} 结合你目前的${context.constitution}体质、${context.season}${context.solarTerm}时令特点，这道菜更有助于稳定状态、减轻不适，并且烹饪难度较低，适合连续食用观察体感变化。`
+}
+
+function buildIngredientReason(baseReason, context) {
+  const core = baseReason || '该食材性质平和，适合日常搭配。'
+  return `${core} 从体质调理角度看，它与${context.constitution}体质匹配度较高；从季节角度看，也更符合${context.season}${context.solarTerm}的饮食节律，建议每周规律摄入并与清淡烹调方式搭配。`
 }
 
 onMounted(async () => {
@@ -69,8 +71,8 @@ onMounted(async () => {
         effect: item.reason || '',
         desc: `${recommendData.season}·${recommendData.solar_term} 推荐`,
         tags: [recommendData.constitution],
-        // 根据疗法类型选择合适的图片
-        image: getTherapyImage(item.title),
+        // 按需求移除艾灸/推拿等调理方案图片展示
+        image: '',
         buttonText: '查看详情',
         primaryButton: true
       }))
@@ -82,9 +84,14 @@ onMounted(async () => {
     // 5. 处理菜谱推荐（后端返回的是数组）
     if (recommendData.recipes && Array.isArray(recommendData.recipes) && recommendData.recipes.length > 0) {
       const firstRecipe = recommendData.recipes[0]
+      const reasonContext = {
+        constitution: recommendData.constitution || constitution,
+        season: recommendData.season || '',
+        solarTerm: recommendData.solar_term || ''
+      }
       recipe.value = {
         name: firstRecipe.title || '推荐菜谱',
-        desc: firstRecipe.reason || '',
+        desc: buildRecipeReason(firstRecipe.reason, reasonContext),
         image: firstRecipe.image ? `http://127.0.0.1:8001/data/Caipuimages/${firstRecipe.image}` : 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
       }
       console.log('🍳 菜谱推荐:', recipe.value)
@@ -95,10 +102,15 @@ onMounted(async () => {
     
     // 6. 处理食材推荐
     if (recommendData.ingredients && Array.isArray(recommendData.ingredients)) {
+      const reasonContext = {
+        constitution: recommendData.constitution || constitution,
+        season: recommendData.season || '',
+        solarTerm: recommendData.solar_term || ''
+      }
       ingredients.value = recommendData.ingredients.slice(0, 4).map(item => ({
         id: item.id || `ingredient-${item.title}`,
         name: item.title,
-        effect: item.reason || '',
+        effect: buildIngredientReason(item.reason, reasonContext),
         image: item.image ? `http://127.0.0.1:8001/data/Shicaiimages/${item.image}` : 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
       }))
       console.log('🥬 食材推荐:', ingredients.value)
@@ -158,9 +170,9 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- 推荐食疗方案 -->
+    <!-- 推荐调理方案 -->
     <section v-if="therapies.length > 0" class="block">
-      <h2 class="section-title">推荐食疗方案</h2>
+      <h2 class="section-title">推荐调理方案</h2>
       <p class="section-subtitle">根据你的体质与当前状态，优先推荐以下调理方案：</p>
       <div class="therapy-list">
         <TherapyCard
@@ -191,7 +203,7 @@ onMounted(async () => {
         :image="recipe.image"
       />
       <p class="reason-text">
-        推荐理由：根据你的<span class="hl">体质特点</span>与<span class="hl">进食习惯</span>，选择温和补益的家常菜。
+        推荐理由：综合你的<span class="hl">体质特点</span>、近期状态与季节变化，优先选择更容易坚持、且调理目标更明确的菜谱。
       </p>
     </section>
     
@@ -344,6 +356,10 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.therapy-list :deep(.card-img-wrap) {
+  display: none;
 }
 
 .reason-text {
