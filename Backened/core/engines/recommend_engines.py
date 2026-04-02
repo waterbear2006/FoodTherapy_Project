@@ -302,6 +302,62 @@ class RecommendEngine:
                 return season
         return "春季" # 默认返回春季
 
+    async def generate_recipe_details(self, recipe_name: str, ingredients: List[str]) -> dict:
+        """
+        为没有具体做法的菜谱生成详细的介绍和做法步骤
+        """
+        # 如果没有设置 API 密钥，直接返回默认文本
+        if not self.client:
+            return {
+                "introduction": f"{recipe_name} 是一道结合中医食疗理念的养生佳肴，搭配适当食材，助您调理身体。",
+                "steps": [
+                    "将所有食材洗净备用。",
+                    "结合常规健康烹饪方法（如清蒸、炖煮或少油快炒）进行处理。",
+                    "出锅前根据个人口味适量调味即可食用。"
+                ]
+            }
+            
+        ingredients_str = ", ".join(ingredients) if ingredients else "常规食材"
+        prompt = f"""
+        任务: 请你扮演一位精通中医食疗和厨艺的药膳大师。
+        当前需要为一个食疗菜谱生成“整体介绍”和“详细的制作步骤”。
+        菜谱名称: {recipe_name}
+        主要食材: {ingredients_str}
+        
+        要求:
+        1. 整体介绍 (introduction): 100字左右，结合食材在中医上的寒热温凉、归经，描述这道菜的食疗功效与特色。
+        2. 制作步骤 (steps): 提供详细可行、普通家庭可操作的烹饪步骤，用字符串数组形式返回。
+        3. 请务必采用直接返回 JSON 的方式，必须使用以下格式，不要包含Markdown标记(` ```json `):
+        {{
+            "introduction": "此处填写整体介绍...",
+            "steps": [
+                "步骤1...",
+                "步骤2..."
+            ]
+        }}
+        """
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一位中医食疗养生专家兼厨艺大师，擅长以深入浅出的话语解释菜品的功效并提供详细可行的烹饪步骤。"},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"}
+            )
+            return json.loads(response.choices[0].message.content)
+        except Exception as e:
+            print(f"AI 生成菜谱做法失败: {e}")
+            return {
+                "introduction": f"{recipe_name} 是一道营养丰富的养生佳肴，适合日常保健补益。",
+                "steps": [
+                    "准备好所有食材并清理干净。",
+                    "采用慢火炖煮或少油烹饪的方式进行制作。",
+                    "最后根据个人口味适量添加调味料即可。"
+                ]
+            }
+
     async def _get_ai_reasons(self, constitution: str, solar_term: str, season: str, items: list) -> dict:
         """
         核心 AI 调用逻辑：批量生成推荐理由
@@ -313,12 +369,17 @@ class RecommendEngine:
         # 1. 构造 Prompt
         items_str = ", ".join(items)
         prompt = f"""
-        用户体质: {constitution}
+        患者体质: {constitution}
         当前节气: {solar_term}
         当前季节: {season}
         推荐项目: [{items_str}]
-        任务: 请分别为每个项目写一段15字以内的中医原理解释，说明为什么适合该体质、当前节气和季节。
-        要求: 严禁废话，直接返回 JSON 格式，格式如下: 
+        任务: 请以名老中医的口吻，为每个项目撰写一段15字以内的中医原理解释，说明其适合该体质、当前节气和季节的道理。
+        要求: 
+        1. 使用中医经典术语，如阴阳五行、经络气血、寒热虚实等
+        2. 结合《黄帝内经》《伤寒杂病论》等经典理论
+        3. 语气沉稳、专业，体现行医多年的经验与智慧
+        4. 严禁现代白话，保持中医传统表述风格
+        5. 直接返回 JSON 格式，格式如下: 
         {{"项目名": "理由", ...}}
         """
 
@@ -326,10 +387,10 @@ class RecommendEngine:
             response = await self.client.chat.completions.create(
                 model="deepseek-chat", # 或 gpt-4o-mini
                 messages=[
-                    {"role": "system", "content": "你是一位精通《黄帝内经》和中医季节性养生的专家，熟悉24节气对人体的影响。"},
+                    {"role": "system", "content": "你是一位行医数十年的名老中医，精通《黄帝内经》《伤寒杂病论》等经典著作，擅长根据体质、节气和季节进行辨证施治。你的语言风格古朴典雅，充满中医智慧，善于用经典理论解释食疗原理。"},
                     {"role": "user", "content": prompt}
                 ],
-                response_format={"type": "json_object"} # 强制返回 JSON
+                response_format={{"type": "json_object"}} # 强制返回 JSON
             )
             return json.loads(response.choices[0].message.content)
         except Exception as e:
@@ -338,77 +399,92 @@ class RecommendEngine:
 
     async def get_smart_recommendations(self, user_id: str, constitution: str, age: Optional[int] = None, gender: Optional[str] = None):
         """
-        获取智能推荐
-        
-        Args:
-            user_id: 用户 ID
-            constitution: 用户体质
-            age: 用户年龄（可选）
-            gender: 用户性别（可选）
-            
-        Returns:
-            推荐结果
+        获取智能推荐 (已直接对接本地纯净数据集 caipu/shicai)
         """
+        import random
+        from api.therapy import therapy_service
+        from core.preloader import ingredient_db
+        from models.recommendation import RecommendationItem
+
         # 获取当前节气和季节
         solar_term = self.get_current_solar_term()
         season = self.get_season_by_solar_term(solar_term)
         
-        # 1. 基础召回 (这里后期对接你的 Graph 和 DFS)
-        # 根据体质、节气和季节生成推荐
-        if constitution in self.recommendation_rules:
-            # 获取对应体质的推荐规则
-            constitution_rules = self.recommendation_rules[constitution]
-            # 获取对应季节的推荐
-            if season in constitution_rules:
-                raw_data = constitution_rules[season]
+        # 1. 真实食疗食谱推荐
+        matched_recipes = therapy_service.query(constitution=constitution)
+        if not matched_recipes:
+            # 兼容：如果该体质没有严格匹配的菜谱，则放宽至整个数据库随机
+            matched_recipes = therapy_service.query()
+        # 随机挑选3条避免每次推荐重复视觉疲劳
+        selected_recipes = random.sample(matched_recipes, min(3, len(matched_recipes)))
+
+        # 2. 真实食材推荐
+        matched_ingredients = []
+        for ing_id, ing_data in ingredient_db.items():
+            suitable = ing_data.get('suitable', [])
+            if isinstance(suitable, str):
+                if constitution in suitable: 
+                    matched_ingredients.append(ing_data)
+            elif isinstance(suitable, list):
+                if constitution in suitable or any(constitution in s for s in suitable):
+                    matched_ingredients.append(ing_data)
+        if not matched_ingredients:
+            matched_ingredients = list(ingredient_db.values())
+        selected_ingredients = random.sample(matched_ingredients, min(3, len(matched_ingredients)))
+        
+        # 3. 疗法推荐 (因为疗法不包含图片且为操作手段，继续保留规则库过滤)
+        rule_constitution_key = constitution
+        if rule_constitution_key.endswith("质") and not rule_constitution_key.endswith("体质"):
+            rule_constitution_key = rule_constitution_key.replace("质", "体质")
+            
+        therapies_str = ["艾灸", "推拿"]
+        if rule_constitution_key in self.recommendation_rules:
+            c_rules = self.recommendation_rules[rule_constitution_key]
+            if season in c_rules:
+                therapies_str = c_rules[season].get("therapies", therapies_str)
             else:
-                # 默认使用春季的推荐
-                raw_data = constitution_rules["春季"]
-        else:
-            # 默认推荐
-            raw_data = {
-                "therapies": ["针灸", "推拿"],
-                "recipes": ["营养粥", "养生汤"],
-                "ingredients": ["枸杞", "红枣"]
-            }
+                therapies_str = c_rules.get("春季", {}).get("therapies", therapies_str)
         
-        # 2. 根据年龄和性别调整推荐
-        if age:
-            if age < 18:
-                # 青少年推荐
-                raw_data["recipes"].append("成长粥")
-                raw_data["ingredients"].append("核桃")
-            elif age > 60:
-                # 老年人推荐
-                raw_data["recipes"].append("养生粥")
-                raw_data["ingredients"].append("黑芝麻")
-        
-        if gender == "女性":
-            # 女性推荐
-            raw_data["recipes"].append("红枣桂圆汤")
-            raw_data["ingredients"].append("桂圆")
-        elif gender == "男性":
-            # 男性推荐
-            raw_data["recipes"].append("枸杞汤")
-            raw_data["ingredients"].append("玛咖")
-        
-        # 3. 提取所有项目，准备“打包问 AI”
-        all_items = raw_data["therapies"] + raw_data["recipes"] + raw_data["ingredients"]
-        
-        # 4. 异步调用 AI 获取所有理由
-        reasons_map = await self._get_ai_reasons(constitution, solar_term, season, all_items)
+        # 4. 请求 AI 批量生成理由
+        items_for_ai = therapies_str + \
+                       [r.name for r in selected_recipes] + \
+                       [i.get('name', '未知名') for i in selected_ingredients]
+                       
+        reasons_map = await self._get_ai_reasons(constitution, solar_term, season, items_for_ai)
 
-        # 5. 组装最终结果
-        def build_items(category_list):
-            return [RecommendationItem(title=item, reason=reasons_map.get(item, "益气养生")) for item in category_list]
+        # 5. 封装置为含有真实 ID 和 image 的 RecommendationItem
+        therapies_obj = [
+            RecommendationItem(title=t, reason=reasons_map.get(t, "依照您的体质特别推荐的日常疗法"))
+            for t in therapies_str
+        ]
+        
+        recipes_obj = [
+            RecommendationItem(
+                id=r.id, 
+                title=r.name, 
+                reason=reasons_map.get(r.name, "搭配适当食材，助您调理身体"), 
+                image=getattr(r, 'images', getattr(r, 'image', ''))
+            )
+            for r in selected_recipes
+        ]
+        
+        ingredients_obj = [
+            RecommendationItem(
+                id=i.get('id', 0), 
+                title=i.get('name', ''), 
+                reason=reasons_map.get(i.get('name', ''), "符合当前体质日常所需的绝佳食材"), 
+                image=i.get('image', i.get('images', ''))
+            )
+            for i in selected_ingredients
+        ]
 
-        # 生成个性化总结
-        summary = f"基于您最近的评估，您属于{constitution}，当前节气为{solar_term}，处于{season}。"
+        # 6. 构造总结
+        summary = f"基于您最近的评估，由于您偏向{constitution}，当前节气为{solar_term}，处于{season}。"
         if age:
-            summary += f"您的年龄为{age}岁，"
+            summary += f"同时考虑到您的年龄（{age}岁）"
         if gender:
-            summary += f"性别为{gender}，"
-        summary += "建议重点调理，以下是为您定制的食疗方案。"
+            summary += f"与特征（{gender}），"
+        summary += "以下是系统连线中医库为您定制的高清美味且完全真实的食疗推荐方案。"
 
         return {
             "constitution": constitution,
@@ -417,8 +493,7 @@ class RecommendEngine:
             "age": age,
             "gender": gender,
             "summary": summary,
-            "therapies": build_items(raw_data["therapies"]),
-            "recipes": build_items(raw_data["recipes"]),
-            "ingredients": build_items(raw_data["ingredients"])
+            "therapies": therapies_obj,
+            "recipes": recipes_obj,
+            "ingredients": ingredients_obj
         }
-

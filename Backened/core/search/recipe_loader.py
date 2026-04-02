@@ -51,6 +51,9 @@ def load_recipe_data(file_path: Union[str, Path]) -> List[Recipe]:
                 # 解析图片文件名
                 images = row.get('images', '')
                 
+                # 解析忌口
+                taboo = row.get('taboo', '')
+                
                 # 创建 Recipe 对象
                 recipe_item = Recipe(
                     id=id,
@@ -59,7 +62,8 @@ def load_recipe_data(file_path: Union[str, Path]) -> List[Recipe]:
                     effect=effect,
                     suitable=suitable,
                     steps=steps,
-                    images=images
+                    images=images,
+                    taboo=taboo
                 )
                 
                 recipe_items.append(recipe_item)

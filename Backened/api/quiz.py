@@ -17,7 +17,7 @@ from models.quiz import QuizSubmission, QuizResponse
 from core.engines.quiz_engine import ConstitutionScorer
 
 # 1. 初始化路由器，贴上标签，方便 Swagger 文档分类
-router = APIRouter(prefix="/quiz", tags=["中医体质测试"])
+router = APIRouter(tags=["体质测试"])
 
 # 2. 实例化引擎（把后厨准备好）
 scorer = ConstitutionScorer()
@@ -32,7 +32,8 @@ async def get_quiz_questions():
     try:
         with open(QUESTIONS_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return {"status": "success", "data": data}
+        # 返回 questions 数组
+        return {"status": "success", "data": data.get("questions", [])}
     except FileNotFoundError:
         raise HTTPException(status_code=500, detail="题库文件未找到，请检查 data 目录")
 

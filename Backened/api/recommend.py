@@ -17,17 +17,18 @@ from typing import Optional
 from models.recommendation import RecommendationResponse
 from core.engines.recommend_engines import RecommendEngine
 
-router = APIRouter(prefix="/recommendations", tags=["智能推荐系统"])
+router = APIRouter(tags=["智能推荐"])
 engine = RecommendEngine()
 
 @router.get("/daily", response_model=RecommendationResponse)
 async def get_daily_recommendation(
     user_id: str,
+    constitution: Optional[str] = Query(None, description="用户体质（来自健康档案）"),
     age: Optional[int] = Query(None, description="用户年龄"),
     gender: Optional[str] = Query(None, description="用户性别")
 ):
-    # 1. 先从数据库/缓存获取用户的最新体质（模拟为 湿热体质）
-    user_constitution = "湿热体质" 
+    # 1. 使用前端传入的体质；没有传则兜底到 平和质
+    user_constitution = constitution or "平和质"
     
     # 2. 调用引擎生成推荐
     result = await engine.get_smart_recommendations(user_id, user_constitution, age, gender)
