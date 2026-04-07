@@ -37,7 +37,7 @@ function handleImageError() {
 
 <template>
   <div class="therapy-card">
-    <div class="card-img-wrap" @click="handleClick">
+    <div v-if="image || therapyData?.image" class="card-img-wrap" @click="handleClick">
       <img 
         v-if="image && !imageError" 
         :src="image" 
@@ -123,9 +123,9 @@ function handleImageError() {
   margin: 0 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 10; /* 允许展示更多行，避免理疗建议被截断 */
   -webkit-box-orient: vertical;
+  display: -webkit-box;
 }
 .card-tags {
   display: flex;

@@ -52,31 +52,52 @@ onMounted(async () => {
     
     console.log('✅ 后端推荐数据:', recommendData)
     
-    // 3. 解析推荐数据（后端直接返回 RecommendationResponse 对象）
+    // 3. 解析症状：增加体质基本特征兜底，确保护理感
+    let symptoms = constitutionRecord?.details?.feature || 
+                     constitutionRecord?.details?.symptoms || 
+                     constitutionRecord?.details?.description
+    
+    if (!symptoms || symptoms === '暂无明显症状') {
+      const constitutionExplanations = {
+        '气虚质': '常感神疲乏力、气短懒言、易出汗、舌淡苔白。',
+        '阳虚质': '畏寒怕冷、四肢不温、喜热饮食、精神不振。',
+        '阴虚质': '手足心热、口燥咽干、形体消瘦、易烦躁。',
+        '痰湿质': '感受沉重、多痰、胸闷、舌苔厚腻。',
+        '湿热质': '面垢油光、口苦口干、身重困倦。',
+        '血瘀质': '面色晦暗、皮肤粗糙、易有瘀斑。',
+        '气郁质': '神情抑郁、忧虑脆弱、气机不畅。',
+        '特禀质': '对外界环境敏感、易过敏、喷嚏流涕。',
+        '平和质': '面色红润、精力充沛、饮食睡眠正常。'
+      }
+      symptoms = constitutionExplanations[constitution] || '暂无明显症状'
+    }
+                     
     archive.value = {
       constitution: recommendData.constitution || constitution,
       score: score,
-      symptoms: constitutionRecord?.details?.feature || ''
+      symptoms: symptoms
     }
     
-    // 4. 处理食疗推荐
+    // 4. 处理食疗/理疗推荐
     if (recommendData.therapies && Array.isArray(recommendData.therapies)) {
-      therapies.value = recommendData.therapies.slice(0, 2).map(item => ({
-        id: item.id || `therapy-${item.title}`,
-        name: item.title,
-        title: item.title,
-        tag: '体质调理',
-        effect: item.reason || '',
-        desc: `${recommendData.season}·${recommendData.solar_term} 推荐`,
-        tags: [recommendData.constitution],
-        // 根据疗法类型选择合适的图片
-        image: getTherapyImage(item.title),
-        buttonText: '查看详情',
-        primaryButton: true
-      }))
-      console.log('🍲 食疗推荐:', therapies.value)
-    } else {
-      console.log('⚠️ 没有食疗推荐')
+      therapies.value = recommendData.therapies.map(item => {
+        // 判断是否为物理理疗 (针灸, 推拿, 刮痧, 拔罐, 艾灸等)
+        const isPhysical = /针灸|推拿|刮痧|拔罐|艾灸|穴位|按摩|热敷/.test(item.title)
+        return {
+          id: item.id || `therapy-${item.title}`,
+          name: item.title,
+          title: item.title,
+          tag: isPhysical ? '建议治疗' : '食疗方案',
+          effect: item.reason || '',
+          desc: isPhysical ? '专业中医建议' : '体质调理药膳',
+          tags: isPhysical ? ['非食疗', '传统疗法'] : [recommendData.constitution],
+          image: isPhysical ? '' : item.image, // 理疗不显示图片
+          isPhysical: isPhysical,
+          buttonText: '查看详情',
+          primaryButton: true
+        }
+      })
+      console.log('🍲 调理建议:', therapies.value)
     }
     
     // 5. 处理菜谱推荐（后端返回的是数组）
@@ -133,10 +154,14 @@ onMounted(async () => {
       <span class="header-placeholder"></span>
     </header>
 
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-container">
-      <div class="loading-spinner">🔄</div>
-      <p class="loading-text">正在生成个性化推荐...</p>
+    <!-- 骨架屏加载状态 -->
+    <div v-if="loading" class="skeleton-wrapper">
+      <div class="skeleton-block summary">
+        <van-skeleton title :row="1" />
+      </div>
+      <div class="skeleton-block" v-for="i in 2" :key="i">
+        <van-skeleton title :row="3" />
+      </div>
     </div>
 
     <!-- 健康信息摘要 -->
@@ -158,22 +183,30 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- 推荐食疗方案 -->
-    <section v-if="therapies.length > 0" class="block">
-      <h2 class="section-title">推荐食疗方案</h2>
-      <p class="section-subtitle">根据你的体质与当前状态，优先推荐以下调理方案：</p>
+    <!-- 中医理疗建议 -->
+    <section v-if="therapies.some(t => t.isPhysical)" class="block">
+      <h2 class="section-title">中医理疗建议</h2>
+      <p class="section-subtitle">针灸、推拿等非食疗手段，助您疏通经络：</p>
       <div class="therapy-list">
         <TherapyCard
-          v-for="item in therapies"
+          v-for="item in therapies.filter(t => t.isPhysical)"
           :key="item.id"
-          :title="item.title || item.name"
-          :tag="item.tag || '推荐'"
-          :effect="item.effect"
-          :desc="item.desc"
-          :tags="item.tags"
+          v-bind="item"
           :button-text="null"
-          :primary-button="false"
-          :image="item.image"
+        />
+      </div>
+    </section>
+
+    <!-- 推荐食疗方案 -->
+    <section v-if="therapies.some(t => !t.isPhysical)" class="block">
+      <h2 class="section-title">推荐食疗方案</h2>
+      <p class="section-subtitle">根据您的体质，优先推荐以下药膳食疗：</p>
+      <div class="therapy-list">
+        <TherapyCard
+          v-for="item in therapies.filter(t => !t.isPhysical)"
+          :key="item.id"
+          v-bind="item"
+          :button-text="null"
         />
       </div>
     </section>
@@ -190,9 +223,6 @@ onMounted(async () => {
         calorie="约 300 千卡"
         :image="recipe.image"
       />
-      <p class="reason-text">
-        推荐理由：根据你的<span class="hl">体质特点</span>与<span class="hl">进食习惯</span>，选择温和补益的家常菜。
-      </p>
     </section>
     
     <!-- 推荐食材 -->
@@ -363,28 +393,19 @@ onMounted(async () => {
   gap: 12px;
 }
 
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
+.skeleton-wrapper {
+  padding: 0 20px;
 }
 
-.loading-spinner {
-  font-size: 48px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+.skeleton-block {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.skeleton-block.summary {
+  height: 100px;
 }
 
 .loading-text {

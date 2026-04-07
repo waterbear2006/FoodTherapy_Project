@@ -45,25 +45,20 @@ const suitableTags = computed(() => {
 // 步骤列表 - 支持多种分隔符
 const stepsList = computed(() => {
   if (!props.therapy?.steps) return []
-  if (Array.isArray(props.therapy.steps)) {
-    return props.therapy.steps
-  }
+  if (Array.isArray(props.therapy.steps)) return props.therapy.steps
   
-  const stepsStr = props.therapy.steps
+  const steps = props.therapy.steps
+  // 1. 先按换行和分号拆
+  let parts = steps.split(/[;\n；]/).filter(s => s.trim())
   
-  // 优先尝试按分号、句号分割
-  if (stepsStr.includes(';') || stepsStr.includes('；')) {
-    return stepsStr.split(/[;；]/).filter(s => s.trim()).map(s => s.trim())
-  }
+  // 2. 进一步按数字序号（如 1. 2.）拆分
+  let finalSteps = []
+  parts.forEach(part => {
+    const subParts = part.split(/(?=\d+[.、\s])/).filter(s => s.trim())
+    finalSteps.push(...subParts)
+  })
   
-  // 尝试按数字序号分割（如 "1." "2."）
-  const numberedSteps = stepsStr.split(/(?=\d+\.)/).filter(s => s.trim())
-  if (numberedSteps.length > 1) {
-    return numberedSteps.map(s => s.trim())
-  }
-  
-  // 最后尝试按换行符分割
-  return stepsStr.split('\n').filter(s => s.trim()).map(s => s.trim())
+  return finalSteps.map(s => s.replace(/^\d+[.、\s]*/, '').trim()).filter(s => s)
 })
 
 function handleClose() {

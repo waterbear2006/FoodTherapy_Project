@@ -1,14 +1,18 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getQuizQuestions, submitQuizAnswers } from '@/api/mock'
+import { getQuizQuestions, submitQuizAnswers, saveHealthArchive } from '@/api/mock'
 
 const router = useRouter()
 
 const questions = ref([])
-const options = [
-  { value: '是', label: '是' },
-  { value: '否', label: '否' }
+// 默认选项（兜底）
+const defaultOptions = [
+  { text: '总是', score: 5 },
+  { text: '经常', score: 4 },
+  { text: '有时', score: 3 },
+  { text: '很少', score: 2 },
+  { text: '根本不', score: 1 }
 ]
 
 const currentIndex = ref(0)
@@ -51,11 +55,8 @@ const result = computed(() => {
   
   const mainConstitutionRaw = constitutions[0]
   
-  // 标准化体质名称：去除"体质"后缀，统一格式
+  // 保持原始名称用于查找
   let mainConstitution = mainConstitutionRaw
-  if (mainConstitutionRaw.endsWith('体质')) {
-    mainConstitution = mainConstitutionRaw.slice(0, -2)
-  }
   
   console.log('📊 体质结果:', {
     raw: mainConstitutionRaw,
@@ -151,9 +152,9 @@ async function loadQuestions() {
   }
 }
 
-function choose(optionValue) {
+function choose(score) {
   const questionId = String(currentQuestion.value.id)
-  answers.value[questionId] = optionValue
+  answers.value[questionId] = score
   
   if (currentIndex.value < questions.value.length - 1) {
     currentIndex.value += 1
@@ -242,9 +243,8 @@ async function saveToHealthArchive() {
   
   // 调用后端 API 保存健康档案
   try {
-    const { saveHealthArchive } = await import('../api/mock')
     await saveHealthArchive({
-      user_id: 'user_' + Date.now(),
+      user_id: localStorage.getItem('user_id') || 'temp_user',
       constitution: result.value.type,
       score: Math.round(result.value.score || 85),
       symptoms: result.value.feature,
@@ -312,7 +312,46 @@ function startTest() {
   showUserForm.value = false
 }
 
-function restart() {
+
+// 雷达图背景网格计算
+const radarGrids = [20, 40, 60, 80, 100].map(level => {
+  const angleStep = (Math.PI * 2) / 9
+  return Array.from({ length: 9 }).map((_, i) => {
+    const r = (level / 100) * 100
+    const x = 150 + Math.cos(angleStep * i - Math.PI / 2) * r
+    const y = 150 + Math.sin(angleStep * i - Math.PI / 2) * r
+    return `${x},${y}`
+  }).join(' ')
+})
+
+const radarPoints = computed(() => {
+  if (!result.value || !result.value.scores) return ''
+  const scores = result.value.scores
+  const categories = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质']
+  const angleStep = (Math.PI * 2) / 9
+  
+  return categories.map((cat, i) => {
+    // 获取转化分，如果没有则默认为8（为了图形饱满感，且保证转化分显示比例）
+    const score = Math.max(scores[cat] || 0, 8)
+    const r = (score / 100) * 100
+    const x = 150 + Math.cos(angleStep * i - Math.PI / 2) * r
+    const y = 150 + Math.sin(angleStep * i - Math.PI / 2) * r
+    return `${x},${y}`
+  }).join(' ')
+})
+
+const radarLabels = computed(() => {
+  const categories = ['平和', '气虚', '阳虚', '阴虚', '痰湿', '湿热', '血瘀', '气郁', '特禀']
+  const angleStep = (Math.PI * 2) / 9
+  return categories.map((name, i) => {
+    // 标签位置略微偏离中心
+    const x = 150 + Math.cos(angleStep * i - Math.PI / 2) * 125
+    const y = 150 + Math.sin(angleStep * i - Math.PI / 2) * 125
+    return { name, x, y }
+  })
+})
+
+const restart = () => {
   currentIndex.value = 0
   answers.value = {}
   apiResult.value = null
@@ -480,14 +519,14 @@ onMounted(() => {
         </p>
         <div class="option-list">
           <button
-            v-for="opt in options"
-            :key="opt.label"
+            v-for="opt in (currentQuestion?.options || defaultOptions)"
+            :key="opt.text"
             type="button"
             class="option-btn"
-            :class="{ selected: answers[String(currentQuestion?.id)] === opt.value }"
-            @click="choose(opt.value)"
+            :class="{ selected: answers[String(currentQuestion?.id)] === opt.score }"
+            @click="choose(opt.score)"
           >
-            {{ opt.label }}
+            {{ opt.text }}
           </button>
         </div>
         
@@ -642,24 +681,69 @@ onMounted(() => {
             </div>
           </section>
 
-          <!-- 九维体质得分雷达图数据 -->
-          <section v-if="result.scores" class="report-section">
+          <!-- 九维体质得分雷达图 -->
+          <section v-if="result.scores" class="report-section radar-report">
             <h4 class="section-title">
               <span class="title-icon">📊</span>
-              九维体质得分
+              体质辨识指标
             </h4>
-            <div class="scores-grid">
+            
+            <div class="radar-chart-container">
+              <svg viewBox="0 0 300 300" class="radar-svg">
+                <!-- 背景多边形网格 -->
+                <polygon 
+                  v-for="(grid, i) in radarGrids" 
+                  :key="'grid-'+i"
+                  :points="grid"
+                  class="radar-grid-line"
+                  fill="none"
+                  stroke="#e8e8e8"
+                  stroke-width="1"
+                />
+                
+                <!-- 轴线 -->
+                <line 
+                  v-for="(label, i) in radarLabels" 
+                  :key="'axis-'+i"
+                  x1="150" y1="150" 
+                  :x2="150 + Math.cos((Math.PI * 2 / 9) * i - Math.PI / 2) * 100" 
+                  :y2="150 + Math.sin((Math.PI * 2 / 9) * i - Math.PI / 2) * 100"
+                  stroke="#e8e8e8"
+                  stroke-width="1"
+                  stroke-dasharray="2,2"
+                />
+                
+                <!-- 得分区域 -->
+                <polygon 
+                  :points="radarPoints" 
+                  class="radar-area" 
+                />
+
+                <!-- 各维度标签 -->
+                <text 
+                  v-for="(label, i) in radarLabels" 
+                  :key="'label-'+i"
+                  :x="label.x" 
+                  :y="label.y" 
+                  text-anchor="middle"
+                  dominant-baseline="middle"
+                  class="radar-label-text"
+                >
+                  {{ label.name }}
+                </text>
+              </svg>
+            </div>
+
+            <!-- 数据明细 -->
+            <div class="scores-grid-mini">
               <div 
                 v-for="(score, key) in result.scores" 
                 :key="key"
-                class="score-item"
-                :class="{ 'highlight-score': score === Math.max(...Object.values(result.scores)) }"
+                class="score-mini-item"
+                :class="{ 'high': score >= 40 }"
               >
-                <span class="score-label">{{ key.replace('体质', '') }}</span>
-                <div class="score-bar-wrap">
-                  <div class="score-bar" :style="{ width: (score / 100 * 100) + '%' }"></div>
-                </div>
-                <span class="score-value">{{ score }}分</span>
+                <div class="mini-label">{{ key.replace('体质', '') }}</div>
+                <div class="mini-value">{{ Math.round(score) }}分</div>
               </div>
             </div>
           </section>
@@ -1298,54 +1382,87 @@ onMounted(() => {
   color: #333;
 }
 
-/* 得分网格 */
-.scores-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+/* 雷达图样式 */
+.radar-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+  margin: 0 auto;
+  max-width: 320px;
 }
 
-.score-item {
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e8e8e8;
+.radar-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
 }
 
-.score-item.highlight-score {
-  background: linear-gradient(135deg, rgba(26, 163, 157, 0.15) 0%, rgba(39, 179, 168, 0.15) 100%);
-  border-color: rgba(26, 163, 157, 0.3);
+.radar-grid-line {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 1;
 }
 
-.score-label {
-  display: block;
+.radar-axis {
+  stroke: #eee;
+  stroke-width: 1;
+  stroke-dasharray: 2,2;
+}
+
+.radar-area {
+  fill: rgba(26, 163, 157, 0.25);
+  stroke: #1aa39d;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radar-label-text {
   font-size: 12px;
-  color: #666;
-  margin-bottom: 8px;
-  font-weight: 500;
+  font-weight: 600;
+  fill: #666;
+  text-shadow: 0 0 2px #fff;
 }
 
-.score-bar-wrap {
-  height: 6px;
-  background: #e8e8e8;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 6px;
+/* 迷你得分网格 */
+.scores-grid-mini {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.score-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #1aa39d 0%, #27b3a8 100%);
-  border-radius: 3px;
-  transition: width 0.5s ease;
+.score-mini-item {
+  padding: 10px 8px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
 }
 
-.score-value {
-  display: block;
-  font-size: 13px;
+.score-mini-item.high {
+  background: rgba(26, 163, 157, 0.05);
+  border-color: rgba(26, 163, 157, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.03);
+}
+
+.mini-label {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.mini-value {
+  font-size: 14px;
   font-weight: 700;
+  color: #333;
+}
+
+.score-mini-item.high .mini-value {
   color: #1aa39d;
-  text-align: right;
 }
 
 /* 用户信息网格 */

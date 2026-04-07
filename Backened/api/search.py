@@ -47,6 +47,7 @@ from typing import List, Optional
 from pathlib import Path
 import re
 from pydantic import BaseModel
+import anyio
 
 from models.ingredient import Ingredient
 from core.preloader import ingredient_db, ingredient_trie
@@ -334,7 +335,8 @@ async def get_health_news():
     从 RSS 源获取与健康、养生、食疗相关的新闻资讯
     """
     try:
-        news_data = get_food_news()
+        # 使用 anyio.to_thread.run_sync 将同步阻塞函数移入线程池，防止阻塞事件循环
+        news_data = await anyio.to_thread.run_sync(get_food_news)
         
         # 如果 RSS 获取失败或为空，返回兜底数据
         if not news_data:

@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://127.0.0.1:8001', // 食疗库 API 基础地址
+  baseURL: 'http://127.0.0.1:8001/api', // 食疗库 API 基础地址
   timeout: 10000, // 请求超时时间
   headers: {
     'Content-Type': 'application/json'

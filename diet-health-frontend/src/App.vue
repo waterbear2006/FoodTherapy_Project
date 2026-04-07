@@ -31,7 +31,11 @@ function onSwitch(name) {
   <div class="app-wrap">
     <main class="app-main">
       <router-view v-slot="{ Component }">
-        <component :is="Component" />
+        <transition name="fade" mode="out-in">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </transition>
       </router-view>
     </main>
     <Tabbar v-model="active" @change="onSwitch" placeholder safe-area-inset-bottom>
@@ -119,5 +123,16 @@ function onSwitch(name) {
   margin-top: 4px;
   color: #999;
   font-weight: 500;
+}
+
+/* 页面转场动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

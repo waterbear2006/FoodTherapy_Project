@@ -16,6 +16,27 @@ const api = axios.create({
 // 默认图片
 const defaultImage = 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
 
+// ========== API 缓存层 (方案 B) ==========
+const apiCache = new Map()
+const CACHE_TTL = 300000 // 5 分钟过期
+
+/**
+ * 包装异步请求，增加内存缓存逻辑
+ */
+const withCache = async (key, fetcher) => {
+  const now = Date.now()
+  if (apiCache.has(key)) {
+    const { data, timestamp } = apiCache.get(key)
+    if (now - timestamp < CACHE_TTL) {
+      console.log(`[Cache Hit] 🚀 命中缓存: ${key}`)
+      return data
+    }
+  }
+  const data = await fetcher()
+  apiCache.set(key, { data, timestamp: now })
+  return data
+}
+
 // ========== 食材相关 API ==========
 
 // 获取食材分类列表
@@ -30,25 +51,31 @@ export const getIngredientCategoryList = async () => {
 }
 
 // 获取食材列表
-export const getIngredientList = async (category = '') => {
-  try {
-    const params = category && category !== '全部' ? { category } : {}
-    const res = await api.get('/search/ingredients', { params })
-    const list = res.data || []
-    return list.map(item => ({
-      id: item.id,
-      name: item.name,
-      effect: item.effect,
-      suitable: item.suitable,
-      avoid: item.avoid,
-      methods: item.methods,
-      tag: item.tag,
-      image: item.images ? `http://127.0.0.1:8001/data/Shicaiimages/${item.images}` : defaultImage
-    }))
-  } catch (error) {
-    console.error('获取食材列表失败:', error)
-    return []
-  }
+export const getIngredientList = async (category = '全部', keyword = '') => {
+  const cacheKey = `ingredients:${category}:${keyword}`
+  return withCache(cacheKey, async () => {
+    try {
+      const params = {
+        category: category !== '全部' ? category : undefined,
+        keyword: keyword || undefined
+      }
+      const res = await api.get('/search/ingredients', { params })
+      const list = res.data || []
+      return list.map(item => ({
+        id: item.id,
+        name: item.name,
+        effect: item.effect,
+        suitable: item.suitable,
+        avoid: item.avoid,
+        methods: item.methods,
+        tag: item.tag,
+        image: item.images ? `http://127.0.0.1:8001/data/Shicaiimages/${item.images}` : defaultImage
+      }))
+    } catch (error) {
+      console.error('获取食材列表失败:', error)
+      return []
+    }
+  })
 }
 
 // 搜索食材
@@ -72,59 +99,64 @@ export const searchIngredients = async (keyword) => {
 
 // 获取热门食疗（首页）
 export const getPopularTherapy = async () => {
-  try {
-    const res = await api.get('/search/recipes/popular?limit=5')
-    const list = res.data.items || []
-    return list.map(item => ({
-      id: item.id,
-      title: item.name,
-      tags: Array.isArray(item.suitable) ? item.suitable : (item.suitable ? item.suitable.split('、') : []),
-      efficacy: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
-      ingredients: Array.isArray(item.ingredients) ? item.ingredients : (item.ingredients ? item.ingredients.split('、') : []),
-      method: Array.isArray(item.steps) ? item.steps.join('\n') : item.steps,
-      taboo: item.taboo || '无',
-      image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
-    }))
-  } catch (error) {
-    console.error('获取热门食疗失败:', error)
-    return []
-  }
+  return withCache('popular_therapy', async () => {
+    try {
+      const res = await api.get('/search/recipes/popular?limit=5')
+      const list = res.data.items || []
+      return list.map(item => ({
+        id: item.id,
+        title: item.name,
+        tags: Array.isArray(item.suitable) ? item.suitable : (item.suitable ? item.suitable.split('、') : []),
+        efficacy: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
+        ingredients: Array.isArray(item.ingredients) ? item.ingredients : (item.ingredients ? item.ingredients.split('、') : []),
+        method: Array.isArray(item.steps) ? item.steps.join('\n') : item.steps,
+        taboo: item.taboo || '无',
+        image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
+      }))
+    } catch (error) {
+      console.error('获取热门食疗失败:', error)
+      return []
+    }
+  })
 }
 
 // 获取食疗列表
 export const getTherapyList = async (category = '', keyword = '') => {
-  try {
-    const params = {}
-    if (category && category !== '全部') {
-      params.suitable = category
+  const cacheKey = `therapy_list:${category}:${keyword}`
+  return withCache(cacheKey, async () => {
+    try {
+      const params = {}
+      if (category && category !== '全部') {
+        params.suitable = category
+      }
+      if (keyword && keyword.trim()) {
+        params.keyword = keyword.trim()
+      }
+      const res = await api.get('/therapy/search', { params })
+      console.log('📋 API 返回的原始数据:', res.data, '参数:', params)
+      const list = res.data || []
+      return list.map(item => ({
+        id: item.id,
+        name: item.name, // 保留原始名称给弹窗使用
+        title: item.name,
+        tag: '推荐',
+        effect: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
+        desc: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
+        tags: Array.isArray(item.suitable) ? item.suitable : (item.suitable ? item.suitable.split('、') : []),
+        ingredients: item.ingredients, // 保留原始食材数据给弹窗
+        steps: item.steps, // 保留原始步骤数据给弹窗
+        suitable: item.suitable, // 保留原始适合体质给弹窗
+        images: item.images, // 保留原始图片给弹窗
+        taboo: item.taboo, // 保留禁忌给弹窗
+        buttonText: '查看详情',
+        primaryButton: true,
+        image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
+      }))
+    } catch (error) {
+      console.error('获取食疗列表失败:', error)
+      return []
     }
-    if (keyword && keyword.trim()) {
-      params.keyword = keyword.trim()
-    }
-    const res = await api.get('/therapy/search', { params })
-    console.log('📋 API 返回的原始数据:', res.data, '参数:', params)
-    const list = res.data || []
-    return list.map(item => ({
-      id: item.id,
-      name: item.name, // 保留原始名称给弹窗使用
-      title: item.name,
-      tag: '推荐',
-      effect: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
-      desc: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
-      tags: Array.isArray(item.suitable) ? item.suitable : (item.suitable ? item.suitable.split('、') : []),
-      ingredients: item.ingredients, // 保留原始食材数据给弹窗
-      steps: item.steps, // 保留原始步骤数据给弹窗
-      suitable: item.suitable, // 保留原始适合体质给弹窗
-      images: item.images, // 保留原始图片给弹窗
-      taboo: item.taboo, // 保留禁忌给弹窗
-      buttonText: '查看详情',
-      primaryButton: true,
-      image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
-    }))
-  } catch (error) {
-    console.error('获取食疗列表失败:', error)
-    return []
-  }
+  })
 }
 
 // 获取食疗分类
@@ -271,62 +303,71 @@ export const generateRecipeFromIngredients = async (ingredients, constitution = 
 
 // 获取推荐食疗
 export const getRecommendedTherapies = async (constitution = '', count = 5) => {
-  try {
-    const res = await api.get('/recommend/daily', {
-      params: { user_id: '123', constitution, age: 30, gender: '男性' }
-    })
-    const therapies = res.data.therapies || []
-    return therapies.slice(0, count).map((item, idx) => ({
-      id: idx + 1,
-      title: item.title,
-      effect: item.reason,
-      desc: item.reason,
-      image: defaultImage,
-      users: 10
-    }))
-  } catch (error) {
-    console.error('获取推荐食疗失败:', error)
-    return []
-  }
+  const cacheKey = `recommended_therapies:${constitution}:${count}`
+  return withCache(cacheKey, async () => {
+    try {
+      const res = await api.get('/recommend/daily', {
+        params: { user_id: '123', constitution, age: 30, gender: '男性' }
+      })
+      const therapies = res.data.therapies || []
+      return therapies.slice(0, count).map((item, idx) => ({
+        id: idx + 1,
+        title: item.title,
+        effect: item.reason,
+        desc: item.reason,
+        image: defaultImage,
+        users: 10
+      }))
+    } catch (error) {
+      console.error('获取推荐食疗失败:', error)
+      return []
+    }
+  })
 }
 
 // 获取推荐菜谱
 export const getRecommendedRecipes = async (constitution = '', count = 5) => {
-  try {
-    const res = await api.get('/recommend/daily', {
-      params: { user_id: '123', constitution, age: 30, gender: '男性' }
-    })
-    const recipes = res.data.recipes || []
-    return recipes.slice(0, count).map((item, idx) => ({
-      id: idx + 1,
-      name: item.title,
-      effect: item.reason,
-      match_percentage: 95
-    }))
-  } catch (error) {
-    console.error('获取推荐菜谱失败:', error)
-    return []
-  }
+  const cacheKey = `recommended_recipes:${constitution}:${count}`
+  return withCache(cacheKey, async () => {
+    try {
+      const res = await api.get('/recommend/daily', {
+        params: { user_id: '123', constitution, age: 30, gender: '男性' }
+      })
+      const recipes = res.data.recipes || []
+      return recipes.slice(0, count).map((item, idx) => ({
+        id: idx + 1,
+        name: item.title,
+        effect: item.reason,
+        match_percentage: 95
+      }))
+    } catch (error) {
+      console.error('获取推荐菜谱失败:', error)
+      return []
+    }
+  })
 }
 
 // ========== 体质测试 API ==========
 
 // 获取体质测试题目
 export const getQuizQuestions = async () => {
-  try {
-    const res = await api.get('/quiz/questions')
-    // 后端返回格式：{ status: "success", data: [...] }
-    const questions = res.data.data || res.data.questions || []
-    console.log('获取到的题目数据:', questions)
-    return questions.map((q, idx) => ({
-      id: q.id || idx + 1,
-      question: q.text || q.question,
-      options: q.options || [{ text: '是' }, { text: '否' }]
-    }))
-  } catch (error) {
-    console.error('获取测试题目失败:', error)
-    return []
-  }
+  return withCache('quiz_questions_v1.3', async () => {
+    try {
+      const res = await api.get('/quiz/questions')
+      // 后端返回格式：{ status: "success", data: [...] }
+      const questions = res.data.data || res.data.questions || []
+      console.log('获取到的题目数据:', questions)
+      return questions.map((q, idx) => ({
+        ...q,
+        id: q.id || idx + 1,
+        question: q.text || q.question,
+        options: q.options || [{ text: '是', score: 5 }, { text: '否', score: 1 }]
+      }))
+    } catch (error) {
+      console.error('获取测试题目失败:', error)
+      return []
+    }
+  })
 }
 
 // 提交体质测试答案
@@ -342,15 +383,10 @@ export const submitQuizAnswers = async (answers) => {
     // 将答案转换为后端需要的格式
     const formattedAnswers = Object.keys(answers).map(questionId => {
       const question = questions.find(q => String(q.id) === String(questionId))
-      const answerValue = answers[questionId]
+      const val = answers[questionId]
       
-      // 根据答案值（是/否）转换为分数（1-5）
-      let score
-      if (answerValue === '是') {
-        score = 5
-      } else {
-        score = 1
-      }
+      // 如果 val 是数字，说明是 5 级评分；如果是文本且为'是'，给 5 分
+      let score = typeof val === 'number' ? val : (val === '是' ? 5 : 1)
       
       return {
         category: question?.category || '平和质',
@@ -368,12 +404,13 @@ export const submitQuizAnswers = async (answers) => {
     
     console.log('✅ 后端返回:', res.data)
     
+    // 直接透传后端返回的丰富属性，不再硬编码
     return {
       success: true,
       data: {
-        constitutions: [res.data.primary_constitution || '平和质'],
-        description: `您的主体质是 ${res.data.primary_constitution || '平和质'}`,
-        is_combination: false,
+        constitutions: res.data.constitutions || [res.data.primary_constitution],
+        description: res.data.description || `您的主体质是 ${res.data.primary_constitution}`,
+        is_combination: res.data.is_combination || false,
         scores: res.data.constitution_vector || {}
       }
     }
@@ -401,7 +438,7 @@ export const getExpertAdvice = async (constitution, userInfo) => {
   try {
     // 调用新的每日报告 API
     const res = await api.post('/reports/daily', {
-      user_id: 'user_' + Date.now(),
+      user_id: localStorage.getItem('user_id') || 'guest_user',
       constitution_vector: constitution || {},
       available_ingredients: [],
       force_refresh: false
@@ -420,7 +457,7 @@ export const getWellnessReport = async (constitution, userInfo) => {
   try {
     // 调用新的每日报告 API
     const res = await api.post('/reports/daily', {
-      user_id: 'user_' + Date.now(),
+      user_id: localStorage.getItem('user_id') || 'guest_user',
       constitution_vector: constitution || {},
       available_ingredients: [],
       force_refresh: false
@@ -487,6 +524,47 @@ export const getHealthArchive = async (userId) => {
   } catch (error) {
     console.error('获取健康档案失败:', error)
     return null
+  }
+}
+
+// 保存健康档案 (Sync backend mock)
+export const saveHealthArchive = async (data) => {
+  try {
+    console.log('💾 Mock API: 保存健康档案...', data)
+    // 从 localStorage 获取现有记录
+    const archiveStr = localStorage.getItem('healthArchive') || '[]'
+    const archive = JSON.parse(archiveStr)
+    
+    // 增加一条新记录，或更新现有记录 (根据需要)
+    const newRecord = {
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      timestamp: new Date().toISOString(),
+      type: 'constitution',
+      title: '体质测试报告',
+      content: `体质结果：${data.constitution}`,
+      details: {
+        constitution: data.constitution,
+        scores: data.scores || {},
+        feature: data.symptoms || data.feature || '',
+        userInfo: {
+          gender: data.gender,
+          age: data.age,
+          height: data.height,
+          weight: data.weight
+        }
+      }
+    }
+    
+    // 我们这里只保留最新的体质记录，或者全部保留
+    // 为了简单，我们只往现有数组前面塞
+    archive.unshift(newRecord)
+    localStorage.setItem('healthArchive', JSON.stringify(archive.slice(0, 50))) // 最多保留50条
+    
+    return { success: true, record: newRecord }
+  } catch (error) {
+    console.error('保存健康档案失败:', error)
+    throw error
   }
 }
 

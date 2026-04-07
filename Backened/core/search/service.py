@@ -258,20 +258,18 @@ class TherapyService:
                 
         # 3. 关键词过滤
         if keyword:
-            if use_full_text:
-                filtered = []
-                for recipe in result:
-                    # 全文模糊匹配
-                    if keyword in recipe.name or \
-                       any(keyword in ingredient for ingredient in recipe.ingredients) or \
-                       any(keyword in effect for effect in recipe.effect) or \
-                       any(keyword in suitable for suitable in recipe.suitable) or \
-                       (recipe.steps and keyword in recipe.steps):
-                        filtered.append(recipe)
-                result = filtered
-            else:
-                names = self.name_trie.search_prefix(keyword)
-                result = [r for r in result if r.name in names]
+            kw = keyword.strip()
+            filtered = []
+            for recipe in result:
+                # 改进为包含匹配，不仅限于前缀。支持名称、食材、具体功效。
+                if kw in recipe.name or \
+                   any(kw in ingredient for ingredient in recipe.ingredients) or \
+                   any(kw in effect for effect in (recipe.effect or [])):
+                    filtered.append(recipe)
+                # 如果开启全文搜索，则进一步搜索步骤内容
+                elif use_full_text and recipe.steps and kw in recipe.steps:
+                    filtered.append(recipe)
+            result = filtered
         
         # 缓存结果
         self.cache.put(cache_key, result)

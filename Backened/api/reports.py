@@ -100,22 +100,7 @@ async def get_health_archive(
     }
 
 
-@router.post("/daily", response_model=DailyReportResponse)
-async def generate_daily_report(payload: DailyReportRequest):
-    """
-    生成每日养生建议报告
-    
-    根据用户体质、当前节气和季节，生成个性化的食疗推荐方案。
-    包含：
-    - 当日主体质及变化趋势
-    - 推荐食材和菜谱
-    - 可读性强的养生建议文本
-    - 前端 UI 卡片结构
-    """
-    result = await report_engine.get_daily_report(
-        user_id=payload.user_id,
-        constitution_vector=payload.constitution_vector,
-        available_ingredients=payload.available_ingredients,
-        force_refresh=payload.force_refresh,
-    )
-    return result
+    return {
+        "status": "success",
+        "data": data,
+    }

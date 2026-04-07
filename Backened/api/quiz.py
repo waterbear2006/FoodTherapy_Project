@@ -48,5 +48,7 @@ async def submit_quiz(submission: QuizSubmission):
     # 调用引擎算分 (瘦控制器体现：这里只有一行核心调用)
     vector = scorer.calculate_scores(answers_dict_list)
     result = scorer.get_result(vector)
+    print(f"📥 [Quiz Debug] 原始向量: {vector}")
+    print(f"🏁 [Quiz Debug] 判定结果: {result['primary_constitution']}")
     
     return result

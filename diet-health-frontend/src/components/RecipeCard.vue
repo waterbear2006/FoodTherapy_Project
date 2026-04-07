@@ -80,9 +80,9 @@ defineProps({
   font-size: 13px;
   color: var(--text-secondary);
   margin: 0 0 8px;
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 10;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

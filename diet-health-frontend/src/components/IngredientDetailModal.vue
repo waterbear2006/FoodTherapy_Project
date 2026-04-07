@@ -10,6 +10,7 @@ const emit = defineEmits(['close'])
 
 // 图片 URL
 const imageUrl = computed(() => {
+  if (props.ingredient?.image) return props.ingredient.image
   if (!props.ingredient?.images) return ''
   // 确保图片路径正确拼接
   const imageName = props.ingredient.images.trim()

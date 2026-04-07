@@ -83,10 +83,14 @@ watch([activeCategory, searchKeyword], loadList)
     </div>
 
     <div class="ingredient-grid">
-      <div v-if="loading" class="loading-state">
-        <span class="loading-icon">⏳</span>
-        <span class="loading-text">加载中...</span>
-      </div>
+      <!-- 骨架屏状态 -->
+      <template v-if="loading && ingredients.length === 0">
+        <div v-for="i in 6" :key="i" class="skeleton-card">
+          <van-skeleton-image block class="skeleton-img" />
+          <van-skeleton-paragraph :row="2" class="skeleton-info" />
+        </div>
+      </template>
+
       <div v-else-if="error" class="error-state">
         <span class="error-icon">⚠️</span>
         <span class="error-text">{{ error }}</span>
@@ -216,7 +220,23 @@ watch([activeCategory, searchKeyword], loadList)
   padding: 0 16px;
 }
 
-.loading-state,
+/* 骨架屏样式 */
+.skeleton-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+
+.skeleton-img {
+  width: 100% !important;
+  height: 160px !important;
+}
+
+.skeleton-info {
+  padding: 10px;
+}
+
 .error-state {
   grid-column: 1 / -1;
   display: flex;

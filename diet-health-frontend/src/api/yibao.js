@@ -3,7 +3,7 @@ import request from './request'
 
 export function chatWithYibao(message) {
   return request({
-    url: '/api/assistant/chat',  // 后端接口路径
+    url: '/assistant/chat',  // 后端接口路径
     method: 'post',
     data: {
       message: message

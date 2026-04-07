@@ -1,5 +1,5 @@
 <script setup>
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   name: { type: String, default: '' },
@@ -13,6 +13,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click'])
+const imageError = ref(false)
 
 // 调试：监听 image 属性变化
 watch(() => props.image, (newVal) => {
@@ -29,6 +30,7 @@ function handleImageError() {
     name: props.name,
     imageUrl: props.image
   })
+  imageError.value = true
 }
 
 function handleClick() {
@@ -44,6 +46,7 @@ function handleClick() {
         :src="image" 
         :alt="name" 
         class="card-img" 
+        loading="lazy"
         @error="handleImageError"
       />
       <div v-else class="card-img-placeholder">🌿</div>

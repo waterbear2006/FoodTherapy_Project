@@ -1,0 +1,32 @@
+# =======================
+# 根目录全局忽略
+# =======================
+.vscode/
+.idea/
+.DS_Store
+
+# =======================
+# Conda 虚拟环境
+# =======================
+food_therapy_env/
+venv/
+env/
+
+# =======================
+# 后端 (FastAPI)
+# =======================
+Backened/__pycache__/
+Backened/**/*.pyc
+Backened/.env
+Backened/app.db
+Backened/*.log
+
+# =======================
+# 前端 (Vue + Vite)
+# =======================
+diet-health-frontend/node_modules/
+diet-health-frontend/dist/
+diet-health-frontend/npm-debug.log*
+diet-health-frontend/yarn-error.log*
+diet-health-frontend/yarn-debug.log*
+diet-health-frontend/.pnpm-debug.log*

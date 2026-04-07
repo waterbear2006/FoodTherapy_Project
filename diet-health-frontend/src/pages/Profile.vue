@@ -29,7 +29,23 @@ const latestUserInfo = computed(() => {
 // 获取体质特征（主要症状）
 const constitutionFeature = computed(() => {
   const constitutionRecord = healthRecords.value.find(r => r.type === 'constitution')
-  const feature = constitutionRecord?.details?.feature || ''
+  let feature = constitutionRecord?.details?.feature || ''
+  
+  if (!feature && latestConstitution.value !== '未测试') {
+    const fallbackFeatures = {
+      '气虚质': '容易疲劳、气短懒言，活动后乏力明显，面色偏白或少华。',
+      '湿热质': '面部油光、易生痤疮，口苦口干，身重困倦，大便黏滞不畅。',
+      '阳虚质': '畏寒怕冷，手脚冰凉，喜热饮食，精神不振。',
+      '阴虚质': '手足心热，口燥咽干，鼻微干，喜冷饮，大便干燥。',
+      '痰湿质': '腹部肥满松软，面部皮肤油脂较多，多汗且黏，胸闷痰多。',
+      '血瘀质': '肤色晦暗，唇色暗红，易出现瘀斑，女性痛经。',
+      '气郁质': '情绪低落，焦虑不安，胸闷胁胀，失眠多梦。',
+      '特禀质': '易过敏，对季节变化适应能力差，易患哮喘、荨麻疹等。',
+      '平和质': '体态适中，面色红润，精力充沛，耐受冷热，较少出现不适。'
+    }
+    feature = fallbackFeatures[latestConstitution.value] || '暂无特征数据'
+  }
+  
   console.log('🔍 Profile - 体质特征:', feature)
   return feature
 })

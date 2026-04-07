@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { generateRecipeFromIngredients, checkIngredientCompatibility, getRecommendedRecipes } from '../api/mock'
 import { getHealthArchive } from '../api/mock'
@@ -19,6 +19,27 @@ const generatedRecipes = ref([])
 const selectedRecipe = ref(null)
 // 是否显示详情弹窗
 const showDetailModal = ref(false)
+
+// 格式化制作步骤
+const formattedSteps = computed(() => {
+  if (!selectedRecipe.value?.steps) return []
+  const steps = selectedRecipe.value.steps
+  if (Array.isArray(steps)) return steps
+  
+  // 复杂的正则拆分：支持换行、分号，以及数字序号（如 1. 2. 或 1 2）
+  // 1. 先按换行和分号拆
+  let parts = steps.split(/[;\n；]/).filter(s => s.trim())
+  
+  // 2. 如果拆出来的部分依然很长且包含数字序号，尝试进一步按数字拆分
+  let finalSteps = []
+  parts.forEach(part => {
+    // 匹配类似 "1. " 或 "2、" 或 "3 " 的起始
+    const subParts = part.split(/(?=\d+[.、\s])/).filter(s => s.trim())
+    finalSteps.push(...subParts)
+  })
+  
+  return finalSteps.map(s => s.replace(/^\d+[.、\s]*/, '').trim()).filter(s => s)
+})
 
 // 加载用户体质
 async function loadUserConstitution() {
@@ -257,15 +278,13 @@ function removeIngredient(name) {
       </div>
     </section>
 
-    <!-- 加载中 -->
+    <!-- 加载中 (骨架屏) -->
     <section v-if="generating" class="block">
-      <div class="loading-state">
-        <div class="loading-spinner">
-          <div class="spinner-dot"></div>
-          <div class="spinner-dot"></div>
-          <div class="spinner-dot"></div>
+      <div class="skeleton-generating-card">
+        <van-skeleton-image block class="skeleton-img" />
+        <div class="skeleton-padding">
+          <van-skeleton title :row="3" />
         </div>
-        <p class="loading-text">正在为你定制专属菜谱...</p>
       </div>
     </section>
 
@@ -320,9 +339,9 @@ function removeIngredient(name) {
             <div class="detail-section">
               <h4 class="section-title">👨‍🍳 制作步骤</h4>
               <div class="steps-list">
-                <div v-for="(step, idx) in (typeof selectedRecipe.steps === 'string' ? selectedRecipe.steps.split('\n').filter(s => s.trim()) : selectedRecipe.steps)" :key="idx" class="step-row">
+                <div v-for="(step, idx) in formattedSteps" :key="idx" class="step-row">
                   <span class="step-num">{{ idx + 1 }}</span>
-                  <span class="step-text">{{ step.replace(/^\d+\.\s*/, '') }}</span>
+                  <span class="step-text">{{ step }}</span>
                 </div>
               </div>
             </div>
@@ -562,48 +581,20 @@ function removeIngredient(name) {
   line-height: 1.6;
 }
 
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  background: #ffffff;
+.skeleton-generating-card {
+  background: #fff;
   border-radius: 20px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
 }
 
-.loading-spinner {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+.skeleton-img {
+  width: 100% !important;
+  height: 180px !important;
 }
 
-.spinner-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1aa39d 0%, #27b3a8 100%);
-  animation: bounce 1.4s infinite ease-in-out both;
-}
-
-.spinner-dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.spinner-dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes bounce {
-  0%, 80%, 100% {
-    transform: scale(0);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
+.skeleton-padding {
+  padding: 16px;
 }
 
 .loading-text {

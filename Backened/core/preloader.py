@@ -37,7 +37,7 @@ def load_all_data():
                     "suitable": row["suitable"],
                     "avoid": row["avoid"],
                     "methods": row["methods"],
-                    "images": row["images"],
+                    "images": row["images"].strip(),
                     "category": row["tag"] if row.get("tag") else "其他",  # 使用 tag 作为分类
                     "property": None,  # 可根据需要补充
                     "description": None,  # 可根据需要补充
