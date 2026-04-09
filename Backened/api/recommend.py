@@ -25,11 +25,24 @@ async def get_daily_recommendation(
     user_id: str,
     constitution: Optional[str] = Query(None, description="用户体质（来自健康档案）"),
     age: Optional[int] = Query(None, description="用户年龄"),
-    gender: Optional[str] = Query(None, description="用户性别")
+    gender: Optional[str] = Query(None, description="用户性别"),
+    temperature: Optional[float] = Query(None, description="当前气温"),
+    humidity: Optional[float] = Query(None, description="当前湿度"),
+    city: Optional[str] = Query(None, description="所在城市")
 ):
     # 1. 使用前端传入的体质；没有传则兜底到 平和质
     user_constitution = constitution or "平和质"
     
+    weather_data = None
+    if temperature is not None or humidity is not None or city is not None:
+        weather_data = {
+            "temperature": temperature,
+            "humidity": humidity,
+            "city": city
+        }
+    
     # 2. 调用引擎生成推荐
-    result = await engine.get_smart_recommendations(user_id, user_constitution, age, gender)
+    result = await engine.get_smart_recommendations(
+        user_id, user_constitution, age, gender, weather_data=weather_data
+    )
     return result

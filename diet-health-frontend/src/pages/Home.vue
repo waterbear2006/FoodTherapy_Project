@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getNews } from '@/api/news'
-import { getWellnessReport } from '@/api/mock'
+import { getWellnessReport, fetchRealWeather } from '@/api/mock'
 
 const router = useRouter()
 
@@ -33,6 +33,68 @@ async function loadNews() {
   }
 }
 
+// 气象模拟模式
+const weatherModes = [
+  { mode: 'default', label: '🌤️ 默认/无天气', payload: null },
+  { mode: 'real_time', label: '🌍 真实: 获取周边实时数据', isReal: true, city: '北京' }, // 默认以北京为例，或者前端可改成其他
+  { mode: 'hot_humid', label: '🔥 模拟: 大暑高湿', payload: { temperature: 34, humidity: 88, city: '广州(模拟)' } },
+  { mode: 'cold_dry', label: '❄️ 模拟: 深冬干冷', payload: { temperature: 5, humidity: 20, city: '北京(模拟)' } }
+]
+const weatherIdx = ref(1)
+const envTags = ref([])
+const weatherLoading = ref(false)
+
+// 获取用户动态 GPS 定位
+function getCurrentLocation() {
+  return new Promise((resolve) => {
+    // 1. 检查是否有用户手动设置的城市
+    const customCity = localStorage.getItem('customCity')
+    if (customCity && customCity.trim() !== '') {
+      resolve(customCity.trim())
+      return
+    }
+
+    if (!navigator.geolocation) {
+      resolve('北京') // 浏览器不支持定位时，默认使用北京
+      return
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // 和风天气的 GeoAPI 支持传入坐标，格式为: 经度,纬度
+        const lon = position.coords.longitude.toFixed(3)
+        const lat = position.coords.latitude.toFixed(3)
+        resolve(`${lon},${lat}`)
+      },
+      (error) => {
+        console.warn('⚠️ 获取 GPS 定位失败 (可能是无权限或被拒绝)，退回默认北京:', error)
+        resolve('北京')
+      },
+      { timeout: 5000, maximumAge: 60000 } // 5 秒超时限制，以及 1 分钟缓存
+    )
+  })
+}
+
+async function toggleWeather() {
+  weatherIdx.value = (weatherIdx.value + 1) % weatherModes.length
+  await loadTodayCard()
+}
+
+// 手动修改定位城市
+function editLocation() {
+  const current = localStorage.getItem('customCity') || '';
+  const city = window.prompt("请输入您所在的城市 (留空并确认则恢复自动GPS):", current);
+  if (city !== null) {
+      if (city.trim() === '') {
+          localStorage.removeItem('customCity');
+      } else {
+          localStorage.setItem('customCity', city.trim());
+      }
+      weatherIdx.value = 1; // 强制切换到 'real_time' 以便立刻看效果
+      loadTodayCard();
+  }
+}
+
 // 加载今日养生建议
 async function loadTodayCard() {
   try {
@@ -46,7 +108,34 @@ async function loadTodayCard() {
       constitution = { [type]: constitutionRecord.details.scores?.[type] || 80 }
     }
     
-    const report = await getWellnessReport(constitution, {})
+    let weatherData = null
+    const currentMode = weatherModes[weatherIdx.value]
+    
+    if (currentMode.isReal && currentMode.mode === 'real_time') {
+      weatherLoading.value = true
+      const isCustom = !!localStorage.getItem('customCity')
+      const prefix = isCustom ? '📍 设定' : '🌍 真实'
+      
+      currentMode.label = `${prefix}: 定位中...`
+      
+      // 1. 调用 GPS 获取当前经纬度坐标 (或降级回传城市名)
+      const locationQuery = await getCurrentLocation()
+      
+      // 2. 将坐标传给和风天气 API
+      weatherData = await fetchRealWeather(locationQuery) 
+      weatherLoading.value = false
+      
+      // 更新一下 label 显示获取到的城市名与温度
+      if(weatherData) {
+        currentMode.label = `${prefix}: ${weatherData.city} ${weatherData.temperature}℃`
+      } else {
+        currentMode.label = `❌ ${prefix}: 获取失败`
+      }
+    } else {
+      weatherData = currentMode.payload
+    }
+
+    const report = await getWellnessReport(constitution, {}, weatherData)
     console.log('📋 今日养生报告:', report)
     
     // 更新今日养生卡片
@@ -55,8 +144,10 @@ async function loadTodayCard() {
       suggestion: report.intro || '根据您的体质特点，建议保持均衡饮食，适量运动。',
       foods: report.recommended_ingredients?.length > 0 ? report.recommended_ingredients : ['山药', '红枣', '枸杞'],
       therapy: report.recommended_recipe || '山药红枣粥',
-      tip: report.recipe_tip || '早餐一碗山药红枣粥，有助于暖胃护脾。'
+      tip: report.recipe_tip || '早餐一碗山药红枣粥，有助于暖胃护脾。',
+      season_tag: report.season_tag || '温中 · 补气'
     }
+    envTags.value = report.environmental_tags || []
   } catch (err) {
     console.error('❌ 获取今日养生建议失败:', err)
     // 使用默认值
@@ -72,10 +163,11 @@ onMounted(() => {
 // 今日养生卡片
 const todayCard = ref({
   title: '今日养生建议',
-  suggestion: '饮用生姜茶可以温中散寒，促进血液循环，适合今天的气候与体质状态。',
-  foods: ['山药', '红枣', '枸杞'],
-  therapy: '山药红枣粥',
-  tip: '早餐一碗山药红枣粥，晚间一杯温热生姜茶，有助于暖胃护脾、驱散寒气。'
+  suggestion: '加载中...',
+  foods: [],
+  therapy: '',
+  tip: '',
+  season_tag: ''
 })
 
 // 功能入口
@@ -149,7 +241,18 @@ function handleImageError(event) {
             <span class="today-badge">今日养生</span>
             <h2 class="today-title">{{ todayCard.title }}</h2>
           </div>
-          <span class="today-tag">温中 · 补气</span>
+          <div class="today-tags">
+            <span class="today-tag">{{ todayCard.season_tag || '温中 · 补气' }}</span>
+            <span class="weather-tag" @click="toggleWeather">
+              {{ weatherModes[weatherIdx].label }}
+            </span>
+            <span class="location-tag" @click="editLocation" title="修改定位城市">
+              修改定位 ✎
+            </span>
+          </div>
+        </div>
+        <div class="env-tags" v-if="envTags.length > 0">
+           <span v-for="t in envTags" :key="t" class="env-tag">🌊 触发干预: {{ t }}</span>
         </div>
         <p class="today-suggestion">
           {{ todayCard.suggestion }}
@@ -325,12 +428,67 @@ function handleImageError(event) {
   margin: 0;
 }
 
+.today-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
 .today-tag {
   font-size: 13px;
   color: #ffffff;
   background: rgba(0, 0, 0, 0.12);
   padding: 4px 10px;
   border-radius: 999px;
+}
+
+.weather-tag {
+  font-size: 11px;
+  color: #ffffff;
+  background: rgba(255, 152, 0, 0.8);
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.weather-tag:active {
+  transform: scale(0.95);
+}
+
+.location-tag {
+  font-size: 11px;
+  color: #1aa39d;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.location-tag:active {
+  transform: scale(0.95);
+}
+
+.env-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.env-tag {
+  font-size: 12px;
+  color: #fff;
+  background: rgba(255, 60, 60, 0.65);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ff1744;
 }
 
 .today-suggestion {

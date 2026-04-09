@@ -1,6 +1,13 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
+
+
+class WeatherData(BaseModel):
+    temperature: Optional[float] = Field(None, description="当前温度 (℃)")
+    humidity: Optional[float] = Field(None, description="当前湿度 (%)")
+    pressure: Optional[float] = Field(None, description="当前气压 (hPa)")
+    city: Optional[str] = Field(None, description="城市名称")
 
 
 class DailyReportRequest(BaseModel):
@@ -8,6 +15,7 @@ class DailyReportRequest(BaseModel):
     constitution_vector: Dict[str, float] = Field(..., description="九维体质得分向量")
     available_ingredients: List[str] = Field(default_factory=list, description="用户当日可用食材")
     force_refresh: bool = Field(default=False, description="是否强制刷新同日报告")
+    weather: Optional[WeatherData] = Field(None, description="当日实时天气数据，用于引发气象动态权重干预")
 
 
 class DailyRecommendationRecipe(BaseModel):
@@ -40,6 +48,8 @@ class DailyReportResponse(BaseModel):
     recommended_ingredients: List[str] = Field(default_factory=list, description="推荐食材集合")
     recommended_recipe_ids: List[int] = Field(default_factory=list, description="推荐菜谱 ID 集合")
     recommended_recipes: List[DailyRecommendationRecipe] = Field(default_factory=list, description="推荐菜谱详情")
+    environmental_tags: List[str] = Field(default_factory=list, description="本次推荐触发的天气环境干预标签")
+    weather_info: Optional[WeatherData] = Field(None, description="当前记录的环境天气信息")
     report_text: str = Field(..., description="健康日报文本")
     ui_card: DailySuggestionCard = Field(..., description="前端建议卡片结构")
     cache_hit: bool = Field(..., description="是否命中同日缓存")

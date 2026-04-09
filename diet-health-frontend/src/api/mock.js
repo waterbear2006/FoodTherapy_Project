@@ -37,6 +37,37 @@ const withCache = async (key, fetcher) => {
   return data
 }
 
+// ========== 天气 API ==========
+export const fetchRealWeather = async (city = '北京') => {
+  try {
+    const apiKey = '590fb7f32f534a7d8c6e3d99c43f8658'
+    const apiHost = 'mv6cdppmc6.re.qweatherapi.com'
+    // 1. 获取城市 Location ID
+    const geoRes = await axios.get(`https://${apiHost}/geo/v2/city/lookup?location=${encodeURIComponent(city)}&key=${apiKey}`)
+    if (geoRes.data.code !== '200' || !geoRes.data.location || geoRes.data.location.length === 0) {
+      return null
+    }
+    const locationId = geoRes.data.location[0].id
+    const locationName = geoRes.data.location[0].name
+    
+    // 2. 获取实时温度与湿度
+    const weatherRes = await axios.get(`https://${apiHost}/v7/weather/now?location=${locationId}&key=${apiKey}`)
+    if (weatherRes.data.code !== '200') {
+      return null
+    }
+    
+    const now = weatherRes.data.now
+    return {
+      temperature: Number(now.temp),
+      humidity: Number(now.humidity),
+      city: locationName
+    }
+  } catch (error) {
+    console.error('获取真实天气失败:', error)
+    return null
+  }
+}
+
 // ========== 食材相关 API ==========
 
 // 获取食材分类列表
@@ -453,15 +484,20 @@ export const getExpertAdvice = async (constitution, userInfo) => {
 }
 
 // 获取今日养生报告（完整 UI 卡片数据）
-export const getWellnessReport = async (constitution, userInfo) => {
+export const getWellnessReport = async (constitution, userInfo, weatherData = null) => {
   try {
-    // 调用新的每日报告 API
-    const res = await api.post('/reports/daily', {
+    const payload = {
       user_id: localStorage.getItem('user_id') || 'guest_user',
       constitution_vector: constitution || {},
       available_ingredients: [],
-      force_refresh: false
-    })
+      force_refresh: true // 只要前端拉取，就强制刷新，避免穿叉使用旧天气缓存
+    }
+    if (weatherData) {
+      payload.weather = weatherData
+    }
+    
+    // 调用新的每日报告 API
+    const res = await api.post('/reports/daily', payload)
     
     const data = res.data || {}
     const uiCard = data.ui_card || {}
@@ -474,7 +510,9 @@ export const getWellnessReport = async (constitution, userInfo) => {
       recommended_ingredients: uiCard.recommended_ingredients || [],
       recommended_recipe: uiCard.recommended_recipe || '',
       recipe_tip: uiCard.recipe_tip || '',
-      report_text: data.report_text || ''
+      report_text: data.report_text || '',
+      environmental_tags: data.environmental_tags || [],
+      weather_info: data.weather_info || null
     }
   } catch (error) {
     console.error('获取养生报告失败:', error)

@@ -179,16 +179,24 @@ class RecommendEngine:
         except Exception:
             return {"introduction": "暂无介绍", "steps": ["具体步骤请咨询营养师"]}
 
-    async def _get_ai_reasons(self, constitution: str, solar_term: str, season: str, items: list) -> dict:
+    async def _get_ai_reasons(self, constitution: str, solar_term: str, season: str, items: list, weather_data: Optional[dict] = None) -> dict:
         """批量生成推荐理由 (带缓存与名医兜底)"""
-        cache_key = (constitution, solar_term, tuple(sorted(items)))
+        cache_key = (constitution, solar_term, str(weather_data), tuple(sorted(items)))
         if cache_key in self._ai_cache:
             return self._ai_cache[cache_key]
 
         if not self.client:
             return self._get_fallback_reasons(constitution, solar_term, items)
 
-        prompt = f"体质: {constitution}, 节气: {solar_term}\n项目: {items}\n为每个项目写50字专业中医理由，返回JSON: {{\"项目名\": \"理由\"}}"
+        weather_str = ""
+        if weather_data:
+            temperature = weather_data.get("temperature")
+            humidity = weather_data.get("humidity")
+            city = weather_data.get("city", "")
+            if temperature is not None and humidity is not None:
+                weather_str = f", 当前天气: {city}气温{temperature}℃ 湿度{humidity}%"
+
+        prompt = f"体质: {constitution}, 节气: {solar_term}{weather_str}\n项目: {items}\n为每个项目写50字专业中医理由(如有天气请结合)，返回JSON: {{\"项目名\": \"理由\"}}"
         try:
             import time
             start = time.time()
@@ -239,7 +247,7 @@ class RecommendEngine:
                     reasons[s_item] = f"对症调理{constitution} (中医典籍合『{solar_term}』时令推荐)"
         return reasons
 
-    async def get_smart_recommendations(self, user_id: str, constitution: str, age: Optional[int] = None, gender: Optional[str] = None):
+    async def get_smart_recommendations(self, user_id: str, constitution: str, age: Optional[int] = None, gender: Optional[str] = None, weather_data: Optional[dict] = None):
         """主推荐调度逻辑"""
         import time
         start_t = time.time()
@@ -261,12 +269,13 @@ class RecommendEngine:
         therapies_str = self.recommendation_rules.get(rule_key, {}).get(season, {}).get("therapies", ["艾灸", "推拿"])
         
         items_for_ai = therapies_str + [r.name for r in selected_recipes] + [i.get('name', '') for i in selected_ingredients]
-        reasons_map = await self._get_ai_reasons(constitution, solar_term, season, items_for_ai)
+        reasons_map = await self._get_ai_reasons(constitution, solar_term, season, items_for_ai, weather_data=weather_data)
 
         return {
             "constitution": constitution,
             "solar_term": solar_term,
             "season": season,
+            "weather": weather_data,
             "summary": f"针对{constitution}，{solar_term}期间的专属方案。",
             "therapies": [RecommendationItem(title=t, reason=reasons_map.get(t)) for t in therapies_str],
             "recipes": [RecommendationItem(id=r.id, title=r.name, reason=reasons_map.get(r.name), image=getattr(r, 'images', '')) for r in selected_recipes],

@@ -186,13 +186,61 @@ class DailyReportEngine:
         tags = list(dict.fromkeys(base_tags + season_tag_boost.get(season, [])))
         return tags
 
-    def _recommend_ingredients(self, constitution: str, tag_targets: List[str], top_k: int = 10) -> List[Dict]:
+    def _get_weather_modifiers(self, weather_data: Optional[Dict]) -> Tuple[Dict[str, float], List[str]]:
+        if not weather_data:
+            return {}, []
+        
+        modifiers = {}
+        applied_tags = []
+        
+        # 提取数据，转成 float
+        try:
+            humidity = float(weather_data.get("humidity")) if weather_data.get("humidity") is not None else None
+            temperature = float(weather_data.get("temperature")) if weather_data.get("temperature") is not None else None
+        except (ValueError, TypeError):
+            humidity = None
+            temperature = None
+
+        if humidity is not None:
+            if humidity > 80:
+                modifiers["利湿"] = 3.0
+                modifiers["祛湿"] = 3.0
+                modifiers["健脾"] = 1.0
+                applied_tags.append("高湿利湿")
+            elif humidity < 30:
+                modifiers["润燥"] = 3.0
+                modifiers["生津"] = 2.0
+                applied_tags.append("干燥润燥")
+                
+        if temperature is not None:
+            if temperature >= 32:
+                modifiers["清热"] = 3.0
+                modifiers["解暑"] = 3.0
+                if "高温清热" not in applied_tags:
+                    applied_tags.append("高温清热")
+            elif temperature <= 10:
+                modifiers["温阳"] = 3.0
+                modifiers["散寒"] = 2.0
+                if "寒冷散寒" not in applied_tags:
+                    applied_tags.append("寒冷散寒")
+                    
+        return modifiers, applied_tags
+
+    def _recommend_ingredients(self, constitution: str, tag_targets: List[str], top_k: int = 10, weather_modifiers: Optional[Dict[str, float]] = None) -> List[Dict]:
         constitution = self._normalize_constitution(constitution)
+        weather_mods = weather_modifiers or {}
         scored = []
         for ingredient in self.ingredients:
             tag_hits = len(set(tag_targets) & set(ingredient["tag_list"]))
             suitable_hit = 1 if constitution in ingredient["suitable_list"] else 0
-            score = tag_hits * 2 + suitable_hit
+            
+            # 环境因素权重叠加
+            weather_bonus = 0.0
+            for tag in ingredient["tag_list"]:
+                if tag in weather_mods:
+                    weather_bonus += weather_mods[tag]
+                    
+            score = tag_hits * 2 + suitable_hit + weather_bonus
             if score > 0:
                 scored.append((score, ingredient))
         scored.sort(key=lambda item: item[0], reverse=True)
@@ -255,10 +303,16 @@ class DailyReportEngine:
         tags: List[str],
         recipe_name: str,
         ingredient_names: List[str],
+        applied_env_tags: List[str] = None
     ) -> Tuple[str, str, str]:
+        env_tags_str = ""
+        if applied_env_tags:
+            env_tags_str = f"（当前遇到极端天气，已为您触发：{'、'.join(applied_env_tags)} 的调整）"
+            
         intro = (
             f"当前处于{solar_term}（{season}），你的当日体质以{constitution}为主。"
             f"建议饮食围绕{('、'.join(tags[:2]) or '均衡调养')}展开。"
+            f"{env_tags_str}"
         )
         report_text = (
             f"{intro} 推荐优先使用{('、'.join(ingredient_names[:3]) or '温和食材')}，"
@@ -276,6 +330,7 @@ class DailyReportEngine:
         constitution_vector: Dict[str, float],
         available_ingredients: Optional[List[str]] = None,
         force_refresh: bool = False,
+        weather_data: Optional[Dict] = None,
     ) -> Dict:
         today = date.today().isoformat()
         cache_key = (user_id, today)
@@ -295,8 +350,12 @@ class DailyReportEngine:
             self._top_tags_for_constitution(constitution),
             season,
         )
+        
+        weather_modifiers, applied_env_tags = self._get_weather_modifiers(weather_data)
 
-        recommended_ingredients = self._recommend_ingredients(constitution, matched_tags)
+        recommended_ingredients = self._recommend_ingredients(
+            constitution, matched_tags, weather_modifiers=weather_modifiers
+        )
         ingredient_names = [item["name"] for item in recommended_ingredients]
 
         initial_ingredients = list(dict.fromkeys((available_ingredients or []) + ingredient_names[:3]))
@@ -315,6 +374,7 @@ class DailyReportEngine:
             tags=matched_tags,
             recipe_name=best_recipe,
             ingredient_names=ingredient_names,
+            applied_env_tags=applied_env_tags,
         )
         season_tag = self.SEASON_TAG_MAP.get(season, "四时调养")
         ui_card = {
@@ -336,6 +396,8 @@ class DailyReportEngine:
             "constitution_vector": {k: round(float(v), 2) for k, v in constitution_vector.items()},
             "constitution_delta": delta,
             "matched_tags": matched_tags,
+            "environmental_tags": applied_env_tags,
+            "weather_info": weather_data,
             "recommended_ingredients": ingredient_names,
             "recommended_recipe_ids": recipe_ids,
             "recommended_recipes": recipe_candidates,

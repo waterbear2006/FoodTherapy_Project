@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import RecipeCard from '../components/RecipeCard.vue'
 import TherapyCard from '../components/TherapyCard.vue'
 import IngredientCard from '../components/IngredientCard.vue'
+import { fetchRealWeather } from '@/api/mock'
 
 const router = useRouter()
 
@@ -12,6 +13,7 @@ const therapies = ref([])
 const recipe = ref(null)
 const ingredients = ref([])
 const loading = ref(true)
+const weatherInfo = ref(null)
 
 // 获取疗法相关图片（使用可靠的图片源）
 function getTherapyImage(therapyName) {
@@ -46,8 +48,37 @@ onMounted(async () => {
     
     console.log('📊 智能推荐 - 用户信息:', { constitution, age, gender, score })
     
+    // 1.5 获取实时天气以影响推荐
+    let weatherData = null;
+    try {
+      const location = await new Promise((resolve) => {
+        const customCity = localStorage.getItem('customCity')
+        if (customCity && customCity.trim() !== '') {
+          resolve(customCity.trim())
+          return
+        }
+        if (!navigator.geolocation) resolve('北京');
+        else {
+          navigator.geolocation.getCurrentPosition(
+            pos => resolve(`${pos.coords.longitude.toFixed(3)},${pos.coords.latitude.toFixed(3)}`),
+            err => resolve('北京'),
+            { timeout: 5000, maximumAge: 60000 }
+          );
+        }
+      });
+      weatherData = await fetchRealWeather(location);
+    } catch(e) {
+      console.error('获取天气失败, 继续原逻辑', e);
+    }
+
+    let weatherQuery = '';
+    if (weatherData) {
+      weatherInfo.value = weatherData;
+      weatherQuery = `&temperature=${weatherData.temperature}&humidity=${weatherData.humidity}&city=${encodeURIComponent(weatherData.city)}`;
+    }
+    
     // 2. 调用后端推荐 API
-    const response = await fetch(`http://127.0.0.1:8001/api/recommend/daily?user_id=user_${Date.now()}&constitution=${encodeURIComponent(constitution)}&age=${age}&gender=${encodeURIComponent(gender)}`)
+    const response = await fetch(`http://127.0.0.1:8001/api/recommend/daily?user_id=user_${Date.now()}&constitution=${encodeURIComponent(constitution)}&age=${age}&gender=${encodeURIComponent(gender)}${weatherQuery}`)
     const recommendData = await response.json()
     
     console.log('✅ 后端推荐数据:', recommendData)
@@ -179,6 +210,10 @@ onMounted(async () => {
         </div>
         <div class="summary-row">
           <span>主要症状：{{ archive.symptoms || '暂无记录' }}</span>
+        </div>
+        <div class="weather-row" v-if="weatherInfo">
+           <span>🌤 当前气象：{{ weatherInfo.city }} {{ weatherInfo.temperature }}℃ 湿度{{ weatherInfo.humidity }}%</span>
+           <span class="weather-note">（已根据天气个性化调整专家推荐）</span>
         </div>
       </div>
     </section>
@@ -368,6 +403,24 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 2px;
+}
+
+.weather-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0,0,0,0.06);
+  font-size: 12px;
+  color: #00877a;
+  font-weight: 500;
+}
+
+.weather-note {
+  font-size: 11px;
+  color: #999;
+  font-weight: normal;
 }
 
 .therapy-list {

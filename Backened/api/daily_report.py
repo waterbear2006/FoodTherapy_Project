@@ -14,10 +14,12 @@ engine = DailyReportEngine()
 
 @router.post("/daily", response_model=DailyReportResponse)
 async def generate_daily_report(payload: DailyReportRequest):
+    weather_data = payload.weather.model_dump() if payload.weather else None
     result = await engine.get_daily_report(
         user_id=payload.user_id,
         constitution_vector=payload.constitution_vector,
         available_ingredients=payload.available_ingredients,
         force_refresh=payload.force_refresh,
+        weather_data=weather_data,
     )
     return result
