@@ -3,8 +3,13 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
+import os
+import json
+import asyncio
+from openai import AsyncOpenAI
+from dotenv import load_dotenv
 
-
+load_dotenv()
 @dataclass
 class User:
     user_id: str
@@ -108,6 +113,15 @@ class DailyReportEngine:
         self.graph = _RecipeGraph()
         self.recipe_by_name: Dict[str, Dict] = {}
         self.recipe_by_id: Dict[int, Dict] = {}
+
+        api_key = os.getenv("AI_API_KEY")
+        if api_key:
+            self.client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=os.getenv("AI_BASE_URL", "https://api.openai.com/v1")
+            )
+        else:
+            self.client = None
 
         self._load_data()
         self._build_graph()
@@ -324,6 +338,58 @@ class DailyReportEngine:
         )
         return intro, report_text, tip
 
+    async def _get_ai_report_text(
+        self,
+        constitution: str,
+        solar_term: str,
+        season: str,
+        tags: List[str],
+        recipe_name: str,
+        ingredient_names: List[str],
+        weather_data: Optional[Dict] = None
+    ) -> Optional[Tuple[str, str, str]]:
+        if not self.client:
+            return None
+            
+        weather_str = ""
+        if weather_data:
+            temperature = weather_data.get("temperature")
+            humidity = weather_data.get("humidity")
+            city = weather_data.get("city", "")
+            if temperature is not None and humidity is not None:
+                weather_str = f"当前天气：{city} 气温{temperature}℃，湿度{humidity}%。"
+
+        prompt = (
+            f"用户中医体质：{constitution}。\n"
+            f"当前节气/季节：{solar_term}({season})。\n"
+            f"{weather_str}\n"
+            f"核心调理方向标签：{tags}。\n"
+            f"推荐的核心食材：{ingredient_names[:3]}。\n"
+            f"推荐的组方菜谱：{recipe_name}。\n\n"
+            "请基于上述输入，像一位专业且耐心的老中医一样，给出一份今日养生建议。\n"
+            "请务必结合【天气】和【节气】来论述体质调理的逻辑。\n"
+            "返回严格的 JSON 格式：\n"
+            "{\n"
+            '  "intro": "一句话核心点评目前的体况与环境的关系",\n'
+            '  "report_text": "详细但通俗的调理建议，字数不超过100字，需要自然融合推荐的食材和菜谱在内",\n'
+            '  "tip": "一条简短实用的生活或者饮食小贴士"\n'
+            "}"
+        )
+        try:
+            response = await asyncio.wait_for(
+                self.client.chat.completions.create(
+                    model="deepseek-chat",
+                    messages=[{"role": "user", "content": prompt}],
+                    response_format={"type": "json_object"}
+                ),
+                timeout=6.0
+            )
+            result = json.loads(response.choices[0].message.content)
+            return result.get("intro", ""), result.get("report_text", ""), result.get("tip", "")
+        except Exception as e:
+            print(f"⚠️ [DailyReport Engine] AI 生成超时或失败，退化为规则模板：{e}")
+            return None
+
     async def get_daily_report(
         self,
         user_id: str,
@@ -376,6 +442,14 @@ class DailyReportEngine:
             ingredient_names=ingredient_names,
             applied_env_tags=applied_env_tags,
         )
+        
+        # 尝试通过大模型赋予更为丰富的辩证文案
+        ai_texts = await self._get_ai_report_text(
+            constitution, solar_term, season, matched_tags, best_recipe, ingredient_names, weather_data
+        )
+        if ai_texts and len(ai_texts) == 3 and all(ai_texts):
+            intro, report_text, tip = ai_texts
+
         season_tag = self.SEASON_TAG_MAP.get(season, "四时调养")
         ui_card = {
             "module_title": "今日养生",
