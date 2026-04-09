@@ -101,28 +101,35 @@ function onSwitch(name) {
   min-height: calc(100vh - 50px);
 }
 :deep(.van-tabbar) {
-  --van-tabbar-item-active-color: #1aa39d;
-  background: #ffffff;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  --van-tabbar-item-active-color: var(--primary);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 -6px 32px rgba(125, 157, 138, 0.12);
+  border-top: none;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 :deep(.van-tabbar-item) {
-  padding: 8px 0;
+  padding: 14px 0 10px;
+  min-height: auto;
 }
 :deep(.tabbar-icon) {
   width: 28px;
   height: 28px;
-  color: #999;
-  transition: all 0.2s ease;
+  color: var(--text-muted);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 :deep(.tabbar-icon.active) {
-  color: #1aa39d;
-  transform: scale(1.05);
+  color: var(--primary);
+  transform: translateY(-2px);
+  filter: drop-shadow(0 2px 4px rgba(125, 157, 138, 0.3));
 }
 :deep(.van-tabbar-item__text) {
   font-size: 11px;
-  margin-top: 4px;
-  color: #999;
+  margin-top: 6px;
+  color: var(--text-muted);
   font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 /* 页面转场动画 */

@@ -74,11 +74,11 @@ function handleImageError() {
   overflow: hidden;
   box-shadow: var(--shadow);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .therapy-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 .card-img-wrap {
   width: 100%;
@@ -98,32 +98,33 @@ function handleImageError() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e8f5e9, #c8e6c8);
+  background: linear-gradient(135deg, var(--primary-light), var(--bg-subtle));
 }
 .placeholder-icon {
   font-size: 48px;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 .card-body {
-  padding: 12px;
+  padding: 16px;
 }
 .card-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-h);
-  margin: 0 0 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.card-effect {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
   margin: 0 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
-  -webkit-line-clamp: 10; /* 允许展示更多行，避免理疗建议被截断 */
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+.card-effect {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 10;
   -webkit-box-orient: vertical;
   display: -webkit-box;
 }
@@ -131,32 +132,41 @@ function handleImageError() {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .card-tags .tag {
   font-size: 11px;
   color: var(--primary);
   background: var(--primary-light);
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 .card-btn {
   width: 100%;
-  height: 36px;
+  height: 38px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--primary);
   background: var(--primary-light);
   color: var(--primary);
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
 }
 .card-btn.primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: #fff;
   border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(125, 157, 138, 0.3);
 }
 .card-btn:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(125, 157, 138, 0.2);
+}
+.card-btn.primary:hover {
+  box-shadow: 0 4px 16px rgba(125, 157, 138, 0.4);
 }
 </style>

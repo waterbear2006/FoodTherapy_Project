@@ -797,6 +797,13 @@ onMounted(() => {
   background: var(--bg);
 }
 
+/* 页面头部毛玻璃效果 */
+.page-header {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(250, 249, 247, 0.95);
+}
+
 .page-header {
   display: flex;
   align-items: center;
@@ -891,10 +898,12 @@ onMounted(() => {
 }
 
 .question-text {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text-h);
-  margin: 8px 0 14px;
+  margin: 12px 0 18px;
+  letter-spacing: -0.3px;
+  line-height: 1.4;
 }
 
 .option-list {
@@ -906,10 +915,10 @@ onMounted(() => {
 
 .option-btn {
   width: 100%;
-  padding: 16px 18px;
-  border-radius: 12px;
-  border: 2px solid #e4e4e4;
-  background: #fff;
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
   font-size: 15px;
   color: var(--text-h);
   text-align: left;
@@ -917,6 +926,7 @@ onMounted(() => {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .option-btn::before {
@@ -926,7 +936,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-subtle) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -937,15 +947,15 @@ onMounted(() => {
 
 .option-btn:active {
   transform: scale(0.98);
-  border-color: #667eea;
+  border-color: var(--primary);
 }
 
 .option-btn.selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border-color: transparent;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4), 0 0 0 4px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 6px 20px rgba(125, 157, 138, 0.35), 0 0 0 4px var(--primary-light);
   transform: translateY(-2px);
 }
 
@@ -958,7 +968,7 @@ onMounted(() => {
   font-size: 18px;
   font-weight: bold;
   color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .action-row {
@@ -970,18 +980,20 @@ onMounted(() => {
 
 .btn-secondary {
   padding: 10px 20px;
-  border-radius: 12px;
-  border: 2px solid #e4e4e4;
-  background: #fff;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--bg-card);
   font-size: 14px;
   font-weight: 500;
   color: var(--text-h);
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .btn-secondary:active {
   transform: scale(0.98);
-  background: #f5f5f5;
+  background: var(--bg-subtle);
+  border-color: var(--primary);
 }
 
 .hint {

@@ -90,7 +90,10 @@ watch([activeFilter, searchKeyword], loadList)
     </header>
 
     <div class="search-bar">
-      <span class="search-icon">🔍</span>
+      <svg viewBox="0 0 24 24" class="search-icon">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+        <line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
       <input
         v-model="searchKeyword"
         type="text"
@@ -181,22 +184,28 @@ watch([activeFilter, searchKeyword], loadList)
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #ffffff;
-  border: 2px solid #f0f0f0;
-  border-radius: 16px;
-  padding: 14px 18px;
-  margin: 0 16px 16px;
-  transition: all 0.2s ease;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin: 0 16px 20px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-bar:focus-within {
-  border-color: #1aa39d;
-  box-shadow: 0 0 0 3px rgba(26, 163, 157, 0.1);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
 
 .search-icon {
-  font-size: 20px;
-  color: #999;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.search-bar:focus-within .search-icon {
+  color: var(--primary);
 }
 
 .search-input {
@@ -205,11 +214,11 @@ watch([activeFilter, searchKeyword], loadList)
   background: transparent;
   font-size: 15px;
   outline: none;
-  color: #333;
+  color: var(--text);
 }
 
 .search-input::placeholder {
-  color: #bbb;
+  color: var(--text-muted);
 }
 
 .filter-row {
@@ -223,27 +232,27 @@ watch([activeFilter, searchKeyword], loadList)
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border-radius: 999px;
-  border: 2px solid #f0f0f0;
-  background: #ffffff;
-  color: #666;
+  border: none;
+  background: var(--bg-card);
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, #1aa39d 0%, #27b3a8 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: #fff;
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(26, 163, 157, 0.3);
+  box-shadow: var(--shadow);
 }
 
 .filter-arrow {
@@ -260,15 +269,17 @@ watch([activeFilter, searchKeyword], loadList)
 
 /* 骨架屏样式 */
 .skeleton-card {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
   overflow: hidden;
   padding-bottom: 10px;
+  border: 1px solid var(--border);
 }
 
 .skeleton-img {
   width: 100% !important;
   height: 140px !important;
+  background: linear-gradient(135deg, var(--primary-light), var(--bg-subtle));
 }
 
 .skeleton-info {

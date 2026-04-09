@@ -296,21 +296,22 @@ onMounted(async () => {
 .back-btn {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  border: none;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-light);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #333;
+  color: var(--text-h);
 }
 
 .back-btn:active {
   transform: scale(0.95);
-  background: #f8f9fa;
+  background: var(--bg-subtle);
+  border-color: var(--primary);
 }
 
 .back-btn svg {
@@ -358,9 +359,9 @@ onMounted(async () => {
 
 .summary-card {
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 14px 14px 12px;
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px 16px;
+  box-shadow: var(--shadow-lg);
 }
 
 .summary-top {
@@ -376,9 +377,10 @@ onMounted(async () => {
 }
 
 .summary-main {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-h);
+  letter-spacing: -0.3px;
 }
 
 .summary-score-wrap {
@@ -389,12 +391,14 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--text-muted);
   display: block;
+  font-weight: 400;
 }
 
 .summary-score {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--primary);
+  letter-spacing: -0.5px;
 }
 
 .summary-row {
@@ -409,12 +413,17 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed rgba(0,0,0,0.06);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
   font-size: 12px;
-  color: #00877a;
+  color: var(--primary-dark);
   font-weight: 500;
+  background: var(--primary-light);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-left: -2px;
+  margin-right: -2px;
 }
 
 .weather-note {

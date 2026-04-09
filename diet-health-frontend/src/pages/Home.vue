@@ -212,6 +212,15 @@ function openNews(link) {
   window.open(link)
 }
 
+// 格式化风险文本
+function formatRiskText(tag) {
+  if (tag.includes('高湿')) return '高湿风险'
+  if (tag.includes('寒冷')) return '寒冷风险'
+  if (tag.includes('利湿')) return '利湿干预'
+  if (tag.includes('散寒')) return '散寒干预'
+  return tag
+}
+
 // 图片加载失败处理
 function handleImageError(event) {
   // 图片加载失败时显示占位符
@@ -228,7 +237,28 @@ function handleImageError(event) {
     <!-- 顶部 -->
     <header class="home-header">
       <div class="left">
-        <span class="menu-icon">☰</span>
+        <svg class="menu-icon" viewBox="0 0 24 24">
+          <!-- 自然飘逸的叶子图标 -->
+          <path d="M12 2C12 2 6 8 6 14c0 3.31 2.69 6 6 6s6-2.69 6-6c0-6-6-12-6-12z" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="1.5" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"
+                opacity="0.9"/>
+          <path d="M12 2c0 6-4 10-4 12" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="1.2" 
+                stroke-linecap="round"
+                opacity="0.6"/>
+          <path d="M12 6c2 2 3 4 3 6" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="1.2" 
+                stroke-linecap="round"
+                opacity="0.6"/>
+        </svg>
         <span class="logo-text">苏叶食疗</span>
       </div>
     </header>
@@ -236,27 +266,45 @@ function handleImageError(event) {
     <!-- 今日养生卡片 -->
     <section class="block">
       <div class="today-card">
-        <div class="today-header">
-          <div class="today-title-wrap">
-            <span class="today-badge">今日养生</span>
-            <h2 class="today-title">{{ todayCard.title }}</h2>
+        <!-- 顶部信息栏：季节标签 + 天气定位 -->
+        <div class="today-top-row">
+          <div class="season-tag-wrapper">
+            <svg viewBox="0 0 24 24" class="season-icon">
+              <path d="M12 2C8 2 6 6 6 8c0 3 3 5 6 5s6-2 6-5c0-2-2-6-6-6z" fill="currentColor" opacity="0.9"/>
+              <path d="M12 18c-2 0-4 2-4 4h8c0-2-2-4-4-4z" fill="currentColor" opacity="0.7"/>
+            </svg>
+            <span class="season-text">{{ todayCard.season_tag || '温中 · 补气' }}</span>
           </div>
-          <div class="today-tags">
-            <span class="today-tag">{{ todayCard.season_tag || '温中 · 补气' }}</span>
+          <div class="weather-location-wrapper">
             <span class="weather-tag" @click="toggleWeather">
               {{ weatherModes[weatherIdx].label }}
             </span>
             <span class="location-tag" @click="editLocation" title="修改定位城市">
-              修改定位 ✎
+              <svg viewBox="0 0 24 24" class="location-icon">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+              </svg>
+              <span class="location-text">修改定位</span>
             </span>
           </div>
         </div>
+
+        <!-- 主标题 -->
+        <h2 class="today-title">{{ todayCard.title }}</h2>
+
+        <!-- 风险干预标签（低调显示） -->
         <div class="env-tags" v-if="envTags.length > 0">
-           <span v-for="t in envTags" :key="t" class="env-tag">🌊 触发干预: {{ t }}</span>
+          <div v-for="t in envTags" :key="t" class="risk-badge">
+            <span class="risk-dot"></span>
+            <span class="risk-label">{{ formatRiskText(t) }}</span>
+          </div>
         </div>
+
+        <!-- 养生建议正文 -->
         <p class="today-suggestion">
           {{ todayCard.suggestion }}
         </p>
+
+        <!-- 推荐食材和食疗 -->
         <div class="today-row">
           <div class="today-block">
             <div class="label">推荐食材</div>
@@ -271,6 +319,8 @@ function handleImageError(event) {
             <div class="therapy-name">{{ todayCard.therapy }}</div>
           </div>
         </div>
+
+        <!-- 养生小贴士 -->
         <div class="today-tip">
           <span class="tip-icon">🌱</span>
           <span class="tip-text">{{ todayCard.tip }}</span>
@@ -284,38 +334,53 @@ function handleImageError(event) {
         <button v-for="item in shortcuts" :key="item.key" class="shortcut-item" type="button"
           @click="handleShortcut(item)">
           <div class="shortcut-icon">
-            <svg v-if="item.icon === 'recipe'" viewBox="0 0 64 64" fill="currentColor" class="shortcut-svg">
-              <!-- 生成菜谱 - 古代竹简/食谱 -->
-              <rect x="14" y="12" width="36" height="40" rx="2" opacity="0.15" stroke="currentColor" stroke-width="2"/>
-              <line x1="22" y1="20" x2="42" y2="20" stroke="currentColor" stroke-width="2.5" opacity="0.9"/>
-              <line x1="22" y1="28" x2="42" y2="28" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
-              <line x1="22" y1="36" x2="42" y2="36" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
-              <line x1="22" y1="44" x2="36" y2="44" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
-              <circle cx="32" cy="16" r="3" opacity="0.8"/>
+            <svg v-if="item.icon === 'recipe'" viewBox="0 0 64 64" class="shortcut-svg">
+              <!-- 生成菜谱 - 简约砂锅图标 -->
+              <circle cx="32" cy="32" r="28" fill="currentColor" opacity="0.08"/>
+              <!-- 锅身 -->
+              <ellipse cx="32" cy="36" rx="16" ry="8" fill="currentColor" opacity="0.85"/>
+              <path d="M16 36c0 8 7 14 16 14s16-6 16-14" fill="currentColor" opacity="0.65"/>
+              <!-- 锅盖 -->
+              <ellipse cx="32" cy="28" rx="14" ry="5" fill="currentColor" opacity="0.45"/>
+              <circle cx="32" cy="25" r="3" fill="currentColor" opacity="0.75"/>
+              <!-- 锅耳 -->
+              <circle cx="14" cy="36" r="3" fill="currentColor" opacity="0.55"/>
+              <circle cx="50" cy="36" r="3" fill="currentColor" opacity="0.55"/>
             </svg>
-            <svg v-else-if="item.icon === 'ai'" viewBox="0 0 64 64" fill="currentColor" class="shortcut-svg">
-              <!-- 颐宝 AI - 中医把脉/问诊 -->
-              <circle cx="32" cy="18" r="10" opacity="0.15" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M32 8v6" stroke="currentColor" stroke-width="2" opacity="0.6"/>
-              <path d="M20 52C20 44 24 38 32 38s12 6 12 14" stroke="currentColor" stroke-width="2.5" fill="none" opacity="0.9"/>
-              <circle cx="32" cy="32" r="4" opacity="0.8"/>
-              <path d="M26 42c3-2 9-2 12 0" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+            <svg v-else-if="item.icon === 'ai'" viewBox="0 0 64 64" class="shortcut-svg">
+              <!-- 颐宝 AI - 简约对话图标 -->
+              <circle cx="32" cy="32" r="28" fill="currentColor" opacity="0.08"/>
+              <!-- 对话气泡 -->
+              <ellipse cx="32" cy="30" rx="18" ry="14" fill="currentColor" opacity="0.85"/>
+              <path d="M20 38c0-4 6-8 12-8s12 4 12 8v6l-6-4-6 4v-6z" fill="currentColor" opacity="0.65"/>
+              <!-- 智能光点 -->
+              <circle cx="32" cy="26" r="4" fill="currentColor" opacity="0.95"/>
+              <circle cx="26" cy="32" r="2" fill="currentColor" opacity="0.75"/>
+              <circle cx="38" cy="32" r="2" fill="currentColor" opacity="0.75"/>
             </svg>
-            <svg v-else-if="item.icon === 'test'" viewBox="0 0 64 64" fill="currentColor" class="shortcut-svg">
-              <!-- 体质测试 - 太极/阴阳鱼 -->
-              <circle cx="32" cy="32" r="22" opacity="0.15" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M32 10a22 22 0 1 0 0 44 22 22 0 0 0 0-44z" opacity="0.3"/>
-              <circle cx="32" cy="21" r="5" opacity="0.9"/>
-              <circle cx="32" cy="43" r="5" opacity="0.9"/>
-              <path d="M32 10c0 0-8 10-8 22s8 22 8 22" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+            <svg v-else-if="item.icon === 'test'" viewBox="0 0 64 64" class="shortcut-svg">
+              <!-- 体质测试 - 简约人像图标 -->
+              <circle cx="32" cy="32" r="28" fill="currentColor" opacity="0.08"/>
+              <!-- 头部 -->
+              <circle cx="32" cy="24" r="8" fill="currentColor" opacity="0.85"/>
+              <!-- 身体 -->
+              <path d="M20 34c0-4 5-6 12-6s12 2 12 6v14H20V34z" fill="currentColor" opacity="0.65"/>
+              <!-- 经络线 -->
+              <line x1="32" y1="34" x2="32" y2="44" stroke="currentColor" stroke-width="2" opacity="0.9"/>
+              <circle cx="32" cy="38" r="2" fill="currentColor" opacity="0.85"/>
             </svg>
-            <svg v-else-if="item.icon === 'smart'" viewBox="0 0 64 64" fill="currentColor" class="shortcut-svg">
-              <!-- 智能推荐 - 药葫芦/炼丹炉 -->
-              <circle cx="32" cy="14" r="6" opacity="0.15" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M24 24c0-4 4-6 8-6s8 2 8 6v24c0 8-4 12-8 12s-8-4-8-12V24z" opacity="0.9"/>
-              <circle cx="32" cy="36" r="5" opacity="0.3"/>
-              <path d="M28 24V18h8v6" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
-              <circle cx="32" cy="14" r="2" opacity="0.8"/>
+            <svg v-else-if="item.icon === 'smart'" viewBox="0 0 64 64" class="shortcut-svg">
+              <!-- 智能推荐 - 简约星芒图标 -->
+              <circle cx="32" cy="32" r="28" fill="currentColor" opacity="0.08"/>
+              <!-- 星芒主体 -->
+              <path d="M32 16l2 8 8 2-8 2-2 8-2-8-8-2 8-2 2-8z" fill="currentColor" opacity="0.85"/>
+              <!-- 中心圆 -->
+              <circle cx="32" cy="32" r="6" fill="currentColor" opacity="0.65"/>
+              <!-- 环绕光点 -->
+              <circle cx="32" cy="20" r="2" fill="currentColor" opacity="0.85"/>
+              <circle cx="44" cy="32" r="2" fill="currentColor" opacity="0.85"/>
+              <circle cx="32" cy="44" r="2" fill="currentColor" opacity="0.85"/>
+              <circle cx="20" cy="32" r="2" fill="currentColor" opacity="0.85"/>
             </svg>
           </div>
           <div class="shortcut-text">
@@ -365,8 +430,16 @@ function handleImageError(event) {
 }
 
 .menu-icon {
-  font-size: 20px;
+  width: 24px;
+  height: 24px;
   color: var(--text-h);
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.menu-icon:hover {
+  opacity: 1;
+  transform: rotate(-5deg);
 }
 
 .logo-text {
@@ -391,111 +464,181 @@ function handleImageError(event) {
 }
 
 .today-card {
-  background: linear-gradient(135deg, #1aa39d, #27b3a8);
-  border-radius: 18px;
-  padding: 18px 16px 16px;
-  box-shadow: var(--shadow);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: var(--radius-lg);
+  padding: 20px 20px 18px;
+  box-shadow: var(--shadow-lg);
   color: #ffffff;
+  position: relative;
+  overflow: hidden;
 }
 
-.today-header {
+.today-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 顶部信息行 */
+.today-top-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.today-title-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.today-badge {
-  display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.24);
-  color: #ffffff;
-  font-size: 12px;
+  margin-bottom: 14px;
 }
 
-.today-title {
-  font-size: 20px;
+.season-tag-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 999px;
+}
+
+.season-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.season-text {
+  font-size: 13px;
   font-weight: 600;
   color: #ffffff;
-  margin: 0;
+  letter-spacing: 0.5px;
 }
 
-.today-tags {
+.weather-location-wrapper {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
   gap: 6px;
 }
 
-.today-tag {
-  font-size: 13px;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.12);
-  padding: 4px 10px;
-  border-radius: 999px;
-}
-
 .weather-tag {
-  font-size: 11px;
+  font-size: 12px;
   color: #ffffff;
-  background: rgba(255, 152, 0, 0.8);
-  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
   user-select: none;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .weather-tag:active {
   transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .location-tag {
-  font-size: 11px;
-  color: #1aa39d;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--primary-dark);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   white-space: nowrap;
   user-select: none;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.location-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.location-text {
+  font-size: 12px;
 }
 
 .location-tag:active {
   transform: scale(0.95);
+  background: #ffffff;
 }
 
+/* 主标题 */
+.today-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 12px;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+
+/* 风险干预标签 - 低调简约 */
 .env-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
-.env-tag {
+.risk-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.risk-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFB347;
+  box-shadow: 0 0 8px rgba(255, 179, 71, 0.6);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.risk-label {
   font-size: 12px;
-  color: #fff;
-  background: rgba(255, 60, 60, 0.65);
-  padding: 3px 8px;
-  border-radius: 4px;
-  border-left: 3px solid #ff1744;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .today-suggestion {
   font-size: 14px;
-  color: #f5fffe;
-  line-height: 1.5;
-  margin: 8px 0 12px;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.6;
+  margin: 12px 0 16px;
+  font-weight: 400;
 }
 
 .today-row {
@@ -506,15 +649,20 @@ function handleImageError(event) {
 
 .today-block {
   flex: 1;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-radius: 12px;
-  padding: 10px 10px 8px;
+  padding: 14px 14px 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .label {
   font-size: 12px;
-  color: #e3fbf9;
-  margin-bottom: 6px;
+  color: rgba(227, 251, 249, 0.9);
+  margin-bottom: 8px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .chips {
@@ -526,24 +674,32 @@ function handleImageError(event) {
 .chip {
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   color: #ffffff;
   font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .therapy-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: #ffffff;
+  letter-spacing: -0.2px;
 }
 
 .today-tip {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.16);
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .tip-icon {
@@ -568,31 +724,50 @@ function handleImageError(event) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 8px 10px;
-  border-radius: 14px;
+  gap: 10px;
+  padding: 20px 14px 16px;
+  border-radius: var(--radius-lg);
   border: none;
-  background: #ffffff;
+  background: var(--bg-card);
   box-shadow: var(--shadow);
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shortcut-item:active {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
 }
 
 .shortcut-icon {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(26, 163, 157, 0.12) 0%, rgba(39, 179, 168, 0.08) 100%);
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-subtle) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
-  box-shadow: inset 0 2px 8px rgba(26, 163, 157, 0.08);
+  box-shadow: inset 0 2px 8px rgba(125, 157, 138, 0.1);
+  transition: all 0.3s ease;
+}
+
+.shortcut-item:active .shortcut-icon {
+  background: linear-gradient(135deg, var(--primary-light) 0%, rgba(125, 157, 138, 0.15) 100%);
+  transform: scale(1.05);
 }
 
 .shortcut-svg {
-  width: 36px;
-  height: 36px;
-  color: #1aa39d;
+  width: 42px;
+  height: 42px;
+  color: var(--primary);
+  filter: drop-shadow(0 2px 6px rgba(125, 157, 138, 0.2));
+  transition: all 0.3s ease;
+}
+
+.shortcut-item:active .shortcut-svg {
+  filter: drop-shadow(0 4px 12px rgba(125, 157, 138, 0.3));
+  transform: scale(1.05);
 }
 
 .shortcut-text {
@@ -600,17 +775,18 @@ function handleImageError(event) {
 }
 
 .shortcut-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text-h);
-  margin-bottom: 2px;
-  line-height: 1.3;
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
 }
 
 .shortcut-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
-  line-height: 1.4;
+  line-height: 1.5;
+  font-weight: 400;
 }
 
 .article-list {

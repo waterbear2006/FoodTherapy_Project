@@ -1,20 +1,31 @@
 :root {
-  /* 草本绿 + 米白 + 枣红 */
-  --primary: #27b3a8;
-  --primary-light: #e8f5e9;
-  --primary-dark: #27b3a8;
-  --accent-red: #b44040;
-  --accent-red-light: #f9e6e6;
-  --text: #333;
-  --text-secondary: #666;
-  --text-muted: #999;
-  --text-h: #08060d;
-  --bg: #f7f4ef;
-  --bg-card: #ffffff;
-  --border: #e5e5e5;
-  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  --radius: 12px;
-  --radius-sm: 8px;
+  /* 新中式禅意配色 - 低饱和度天然色彩 */
+  --primary: #7d9d8a; /* 豆沙绿 */
+  --primary-light: #f0f5f2; /* 淡绿背景 */
+  --primary-dark: #5a7a68; /* 深豆绿 */
+  --accent: #c9a97a; /* 淡姜黄 */
+  --accent-light: #faf6f0; /* 米白 */
+  --text: #4a4a4a; /* 深灰 */
+  --text-secondary: #6b6b6b; /* 中灰 */
+  --text-muted: #9a9a9a; /* 浅灰 */
+  --text-h: #2d2d2d; /* 标题深灰 */
+  --bg: #faf9f7; /* 米白背景 */
+  --bg-card: #ffffff; /* 纯白卡片 */
+  --bg-subtle: #f5f3f0; /* 微妙背景 */
+  --border: #e8e6e1; /* 浅米色边框 */
+  --shadow-sm: 0 2px 8px rgba(125, 157, 138, 0.04);
+  --shadow: 0 4px 20px rgba(125, 157, 138, 0.08);
+  --shadow-lg: 0 8px 32px rgba(125, 157, 138, 0.12);
+  --shadow-xl: 0 12px 48px rgba(125, 157, 138, 0.16);
+  --shadow-hover: 0 8px 24px rgba(125, 157, 138, 0.1);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-lg: 20px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 20px;
+  --spacing-lg: 28px;
+  --spacing-xl: 36px;
 
   --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --heading: var(--sans);
@@ -79,23 +90,39 @@ body {
 }
 
 h1,
-h2 {
+h2,
+h3,
+h4 {
   font-family: var(--heading);
-  font-weight: 500;
   color: var(--text-h);
+  line-height: 1.3;
 }
 
 h1 {
-  font-size: 24px;
+  font-size: 26px;
+  font-weight: 700;
   letter-spacing: -0.5px;
-  margin: 16px 0;
+  margin: 20px 0 12px;
 }
 
 h2 {
-  font-size: 20px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0 0 10px;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
   margin: 0 0 8px;
+}
+
+h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 6px;
 }
 p {
   margin: 0;

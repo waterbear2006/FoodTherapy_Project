@@ -447,26 +447,27 @@ function removeIngredient(name) {
 
 .ingredient-input:focus {
   outline: none;
-  border-color: #1aa39d;
-  box-shadow: 0 0 0 3px rgba(26, 163, 157, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light), var(--shadow);
 }
 
 .btn-add {
   width: 48px;
   height: 48px;
-  border-radius: 16px;
+  border-radius: var(--radius);
   border: none;
-  background: linear-gradient(135deg, #1aa39d 0%, #27b3a8 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: #fff;
   font-size: 28px;
   font-weight: 300;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(26, 163, 157, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow);
 }
 
 .btn-add:active {
   transform: scale(0.95);
+  box-shadow: var(--shadow-sm);
 }
 
 .tag-group {
@@ -490,25 +491,26 @@ function removeIngredient(name) {
 .tag-chip {
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid #e8e8e8;
-  background: #ffffff;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
   font-size: 14px;
-  color: #555;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  font-weight: 500;
 }
 
 .tag-chip:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
 .tag-chip.selected {
-  background: linear-gradient(135deg, #1aa39d 0%, #27b3a8 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border-color: transparent;
   color: #fff;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(26, 163, 157, 0.3);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(125, 157, 138, 0.35);
 }
 
 .empty-tag {
@@ -523,25 +525,27 @@ function removeIngredient(name) {
 
 .btn-generate-main {
   width: 100%;
-  padding: 16px;
-  border-radius: 16px;
+  padding: 18px;
+  border-radius: var(--radius-lg);
   border: none;
-  background: linear-gradient(135deg, #1aa39d 0%, #27b3a8 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: #fff;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(26, 163, 157, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-lg);
   margin-top: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  letter-spacing: 0.5px;
 }
 
 .btn-generate-main:active {
   transform: scale(0.98);
+  box-shadow: var(--shadow);
 }
 
 .btn-generate-main:disabled {

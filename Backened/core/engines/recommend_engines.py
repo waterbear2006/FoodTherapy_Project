@@ -31,7 +31,7 @@ class RecommendEngine:
             )
         else:
             self.client = None
-            print("⚠️ [RecommendEngine] 警告：未设置 AI_API_KEY 环境变量，将使用默认推荐理由")
+            print("[RecommendEngine] 警告：未设置 AI_API_KEY 环境变量，将使用默认推荐理由")
         
         # 智能推荐理由本地缓存
         self._ai_cache = {}
