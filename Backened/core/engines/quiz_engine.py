@@ -2,10 +2,9 @@
 [Business Engine] 体质测试引擎
 职责：计算用户体质测试的得分，生成体质测试结果。
 实施功能：
-- 计算用户九种体质的得分
-- 根据得分生成体质测试结果
-- 支持九种体质类型的测试
-- 提供体质测试结果的详细信息
+- 计算用户九种体质的得分（采用标准转化分公式）
+- 根据 2009 版《中医体质分类与判定》判定体质类型
+- 支持九种体质类型的测试与结果生成
 """
 from typing import List, Dict, Any
 
@@ -27,53 +26,78 @@ class ConstitutionScorer:
     
     def calculate_scores(self, answers: List[Dict[str, Any]]) -> Dict[str, float]:
         """
-        计算每种体质的得分
-        
-        Args:
-            answers: 用户提交的答案列表，每个答案包含 category 和 score 字段
-            
-        Returns:
-            每种体质的得分向量
+        计算每种体质的转化分（标准公式）
+        转化分 = [(原始分 - 题目数) / (题目数 * 4)] * 100
         """
-        # 初始化得分字典
-        scores = {constitution: 0.0 for constitution in self.constitutions}
+        # 统计每种体质的原始分总和与题目统计
+        category_stats = {c: {"sum": 0, "count": 0} for c in self.constitutions}
         
-        # 统计每种体质的得分
         for answer in answers:
             category = answer.get("category")
             score = answer.get("score", 0)
-            
-            if category in scores:
-                scores[category] += score
+            if category in category_stats:
+                category_stats[category]["sum"] += score
+                category_stats[category]["count"] += 1
         
-        # 计算转化分（满分100）
-        # 这里简化处理，实际中医体质测试有更复杂的计算方法
-        # 假设每道题满分5分，9道题满分45分，转化为100分制
-        max_possible_score = 5 * 9  # 假设每道题满分5分，共9道题
-        for constitution in scores:
-            # 转化为0-100分
-            scores[constitution] = (scores[constitution] / max_possible_score) * 100
+        # 计算转化分
+        scores = {}
+        for category, stats in category_stats.items():
+            count = stats["count"]
+            if count > 0:
+                # 标准公式计算
+                converted = ((stats["sum"] - count) / (count * 4)) * 100
+                scores[category] = round(converted, 1)
+            else:
+                scores[category] = 0.0
         
         return scores
     
     def get_result(self, score_vector: Dict[str, float]) -> Dict[str, Any]:
         """
-        根据得分向量生成测试结果
-        
-        Args:
-            score_vector: 每种体质的得分向量
-            
-        Returns:
-            体质测试结果，包含主体质和得分向量
+        根据 2009 版《中医体质分类与判定》标准进行判定
+        判定规则：
+        1. 偏颇体质：转化分 >= 40 为“是”，30-39 为“有倾向”。
+        2. 平和质：平和质转化分 >= 60 且 其他 8 种体质转化分均 < 30。
         """
-        # 找出得分最高的体质作为主体质
-        primary_constitution = max(score_vector, key=score_vector.get)
+        pinghe_score = score_vector.get("平和质", 0)
+        imbalanced = {k: v for k, v in score_vector.items() if k != "平和质"}
         
-        # 构建返回结果
-        result = {
-            "primary_constitution": primary_constitution,
+        results = []
+        is_combination = False
+        
+        # 1. 判定偏颇体质 (确定的)
+        for cat, score in imbalanced.items():
+            if score >= 40:
+                results.append(cat)
+        
+        # 2. 如果没有确定的，检查是否有倾向 (30-39)
+        if not results:
+            for cat, score in imbalanced.items():
+                if score >= 30:
+                    results.append(cat)
+                    
+        # 3. 最后判定平和质 (只有在完全没有偏居倾向时才判定为平和)
+        if not results:
+            # 找到得分最高的体质（排除平和质）
+            max_bias_cat = max(imbalanced, key=imbalanced.get)
+            max_bias_score = imbalanced[max_bias_cat]
+            
+            # 如果最高偏颇分超过或等于 30 (倾向值)，即使平和质分再高也要提示不平衡
+            if max_bias_score >= 30:
+                results = [max_bias_cat]
+            elif pinghe_score >= 60:
+                results = ["平和质"]
+            else:
+                # 都不足 30 时，再看谁得分最高
+                results = [max_bias_cat if max_bias_score > pinghe_score else "平和质"]
+
+        if len(results) > 1:
+            is_combination = True
+        return {
+            "primary_constitution": results[0],
+            "constitutions": results,
+            "is_combination": is_combination,
             "constitution_vector": score_vector,
-            "status": "success"
+            "status": "success",
+            "description": f"经过专业辨识，您的主体质是【{results[0]}】" + ("，并带有其他兼夹体质。" if is_combination else "。")
         }
-        
-        return result

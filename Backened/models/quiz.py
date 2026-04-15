@@ -21,6 +21,9 @@ class QuizSubmission(BaseModel):
 class QuizResponse(BaseModel):
     """后端返回的体质测试结果"""
     primary_constitution: str = Field(..., description="得分最高的主体质，即最终判定结果", example="阳虚质")
+    constitutions: List[str] = Field(default=[], description="判定的所有体质类别（包含主偏体质）")
+    is_combination: bool = Field(default=False, description="是否属于兼夹体质")
     # Dict[str, float] 表示键是字符串(体质名)，值是浮点数(转化分)
     constitution_vector: Dict[str, float] = Field(..., description="九大体质的转化分向量")
+    description: str = Field(default="", description="体质判定的专业总结描述文案")
     status: str = Field(default="success", description="接口请求状态")

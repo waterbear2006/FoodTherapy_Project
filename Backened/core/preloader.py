@@ -28,6 +28,7 @@ def load_all_data():
             reader = csv.DictReader(f)
             for row in reader:
                 # 构建食材对象
+                # 使用 tag 字段作为分类（如：补气、补血、滋阴等）
                 ingredient = {
                     "id": int(row["id"]),
                     "name": row["name"],
@@ -36,8 +37,9 @@ def load_all_data():
                     "suitable": row["suitable"],
                     "avoid": row["avoid"],
                     "methods": row["methods"],
-                    "images": row["images"],
-                    "category": None,  # 可根据需要补充
+                    "images": row["images"].strip(),
+                    "ancient_books": row.get("AncientBooks", "古籍"),
+                    "category": row["tag"] if row.get("tag") else "其他",  # 使用 tag 作为分类
                     "property": None,  # 可根据需要补充
                     "description": None,  # 可根据需要补充
                     "related_recipes": []  # 可根据需要补充
@@ -52,11 +54,11 @@ def load_all_data():
                 # C. 装载到哈希索引 (HashIndex) -> 用于 O(1) 极速反查
                 recipe_hash_index.add(row["name"], row["id"])
         
-        print(f"🚀 [Preloader] 成功加载 {len(ingredient_db)} 种食材数据到内存结构。")
+        print(f"[Preloader] 成功加载 {len(ingredient_db)} 种食材数据到内存结构。")
 
     except FileNotFoundError:
-        print(f"⚠️ [Preloader] 警告：未找到数据文件 {ingredients_file}，算法实例为空。")
+        print(f"[Preloader] 警告：未找到数据文件 {ingredients_file}，算法实例为空。")
     except Exception as e:
-        print(f"❌ [Preloader] 发生错误: {e}")
+        print(f"[Preloader] 发生错误: {e}")
 
 # 在模块被导入时，可以手动调用一次，或者在 main.py 启动时调用

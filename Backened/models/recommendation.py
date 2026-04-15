@@ -13,8 +13,10 @@ class RecommendationItem(BaseModel):
     """
     推荐项目模型
     """
+    id: Optional[int] = Field(None, description="项目真实ID")
     title: str = Field(..., description="推荐项目标题")
     reason: str = Field(..., description="推荐理由")
+    image: Optional[str] = Field(None, description="真实图片名称")
 
 class RecommendationResponse(BaseModel):
     """

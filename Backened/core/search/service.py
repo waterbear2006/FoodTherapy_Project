@@ -237,17 +237,39 @@ class TherapyService:
         if cached:
             return cached
         
-        # 根据参数进行查询
-        if use_full_text:
-            result = self.full_text_search(keyword)
-        elif tag:
-            result = self.filter_by_tag(tag)
-        elif constitution:
-            result = self.filter_by_constitution(constitution)
-        elif keyword:
-            result = self.search_by_name(keyword)
-        else:
-            result = self.recipes
+        # 从全部数据开始逐层过滤
+        result = self.recipes
+        
+        # 1. 体质过滤
+        if constitution and constitution != '全部':
+            ids = self.suitable_index.get(constitution)
+            if ids:
+                result = [r for r in result if r.id in ids]
+            else:
+                result = []
+                
+        # 2. 标签过滤
+        if tag and tag != '全部':
+            ids = self.effect_index.get(tag)
+            if ids:
+                result = [r for r in result if r.id in ids]
+            else:
+                result = []
+                
+        # 3. 关键词过滤
+        if keyword:
+            kw = keyword.strip()
+            filtered = []
+            for recipe in result:
+                # 改进为包含匹配，不仅限于前缀。支持名称、食材、具体功效。
+                if kw in recipe.name or \
+                   any(kw in ingredient for ingredient in recipe.ingredients) or \
+                   any(kw in effect for effect in (recipe.effect or [])):
+                    filtered.append(recipe)
+                # 如果开启全文搜索，则进一步搜索步骤内容
+                elif use_full_text and recipe.steps and kw in recipe.steps:
+                    filtered.append(recipe)
+            result = filtered
         
         # 缓存结果
         self.cache.put(cache_key, result)

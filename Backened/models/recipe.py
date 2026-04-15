@@ -19,3 +19,4 @@ class Recipe(BaseModel):
     suitable: List[str] = Field(default_factory=list)      # 适合体质列表
     steps: str = ""                                      # 制作步骤
     images: str = ""                                     # 图片文件名
+    taboo: str = ""                                      # 忌口

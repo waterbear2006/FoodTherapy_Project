@@ -14,11 +14,11 @@ from typing import List, Optional
 from models.ingredient import Ingredient
 from core.preloader import ingredient_db
 
-router = APIRouter(prefix="/api/ingredients", tags=["食材库模块"])
+router = APIRouter(tags=["食材库模块"])
 
 @router.get("/", response_model=List[Ingredient])
-async def list_ingredients(category: Optional[str] = None, tag: Optional[str] = None, suitable: Optional[str] = None):
-    """获取所有食材，支持按分类、标签和适合体质筛选"""
+async def list_ingredients(category: Optional[str] = None, tag: Optional[str] = None, suitable: Optional[str] = None, keyword: Optional[str] = None):
+    """获取所有食材，支持按分类、标签、适合体质和关键字(名称)筛选"""
     all_items = list(ingredient_db.values())
     
     # 按分类筛选
@@ -32,6 +32,10 @@ async def list_ingredients(category: Optional[str] = None, tag: Optional[str] = 
     # 按适合体质筛选
     if suitable:
         all_items = [item for item in all_items if suitable in item["suitable"]]
+    
+    # 关键字搜索
+    if keyword:
+        all_items = [item for item in all_items if keyword in item["name"] or (item.get("effect") and keyword in item["effect"])]
     
     return all_items
 

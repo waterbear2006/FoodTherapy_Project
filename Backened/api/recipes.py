@@ -13,22 +13,29 @@
 """
 from fastapi import APIRouter, Query, HTTPException
 from typing import List, Optional
+from pydantic import BaseModel
 from models.recipe import Recipe
 from core.search.recipe_service import RecipeService
+from core.engines.recommend_engines import RecommendEngine
 from pathlib import Path
 
-router = APIRouter(prefix="/api/recipes", tags=["菜谱模块"])
+class GenerateDetailsRequest(BaseModel):
+    recipe_name: str
+    ingredients: List[str]
 
-# 初始化菜谱服务
+router = APIRouter(tags=["菜谱"])
+
+# 初始化菜谱服务和AI推荐引擎
 recipe_service = RecipeService()
+recommend_engine = RecommendEngine()
 
 # 加载菜谱数据
 data_path = Path(__file__).resolve().parent.parent / "data" / "caipu.csv"
 if data_path.exists():
     loaded_count = recipe_service.load_data(data_path)
-    print(f"🚀 [Recipes] 成功加载 {loaded_count} 条菜谱数据")
+    print(f"[Recipes] 成功加载 {loaded_count} 条菜谱数据")
 else:
-    print(f"⚠️ [Recipes] 警告：未找到数据文件 {data_path}")
+    print(f"[Recipes] 警告：未找到数据文件 {data_path}")
 
 
 @router.get("/", response_model=List[Recipe])
@@ -104,3 +111,11 @@ async def search_recipes_by_ingredients(
     """
     recipes = recipe_service.search_by_ingredients(ingredients)
     return recipes
+
+@router.post("/generate_details")
+async def generate_recipe_details_api(req: GenerateDetailsRequest):
+    """
+    借助AI为菜谱生成整体介绍与烹饪步骤
+    """
+    result = await recommend_engine.generate_recipe_details(req.recipe_name, req.ingredients)
+    return {"status": "success", "data": result}

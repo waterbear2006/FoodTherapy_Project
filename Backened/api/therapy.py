@@ -16,18 +16,18 @@ from models.recipe import Recipe
 from core.search.service import TherapyService
 from pathlib import Path
 
-router = APIRouter(prefix="/api/therapy", tags=["食疗库模块"])
+router = APIRouter(tags=["食疗库"])
 
 # 初始化食疗服务
 therapy_service = TherapyService()
 
-# 加载食疗数据
-data_path = Path(__file__).resolve().parent.parent / "data" / "shicai.csv"
+# 加载食疗数据（菜谱库/食疗库使用 caipu.csv）
+data_path = Path(__file__).resolve().parent.parent / "data" / "caipu.csv"
 if data_path.exists():
     loaded_count = therapy_service.load_data(data_path)
-    print(f"🚀 [Therapy] 成功加载 {loaded_count} 条食疗数据")
+    print(f"[Therapy] 成功加载 {loaded_count} 条食疗数据")
 else:
-    print(f"⚠️ [Therapy] 警告：未找到数据文件 {data_path}")
+    print(f"[Therapy] 警告：未找到数据文件 {data_path}")
 
 
 @router.get("/search", response_model=List[Recipe])
@@ -35,16 +35,19 @@ async def search_therapy(
     keyword: str = Query("", description="搜索关键词"),
     tag: Optional[str] = Query(None, description="功能标签"),
     constitution: Optional[str] = Query(None, description="体质类型"),
+    suitable: Optional[str] = Query(None, description="体质类型（与constitution相同，兼容前端参数）"),
     use_full_text: bool = Query(False, description="是否使用全文检索")
 ):
     """
     搜索食疗
     支持按关键词、功能标签、体质类型进行搜索
     """
+    # 兼容前端使用的 suitable 参数名
+    constitution_value = constitution or suitable
     result = therapy_service.query(
         keyword=keyword,
         tag=tag,
-        constitution=constitution,
+        constitution=constitution_value,
         use_full_text=use_full_text
     )
     return result
@@ -89,12 +92,13 @@ async def get_all_tags():
     """
     获取所有功能标签
     """
-    # 从已加载的数据中提取所有标签
+    # 从已加载的数据中提取所有功能标签（来自 Recipe.effect）
     all_items = therapy_service.query()
     tags = set()
     for item in all_items:
-        tags.update(item.tags)
-    return list(tags)
+        # item.effect 是 List[str]
+        tags.update(item.effect or [])
+    return sorted(tags)
 
 
 @router.get("/constitutions", response_model=List[str])
@@ -102,9 +106,9 @@ async def get_all_constitutions():
     """
     获取所有体质类型
     """
-    # 从已加载的数据中提取所有体质类型
+    # 从已加载的数据中提取所有体质类型（来自 Recipe.suitable）
     all_items = therapy_service.query()
     constitutions = set()
     for item in all_items:
-        constitutions.update(item.constitution)
-    return list(constitutions)
+        constitutions.update(item.suitable or [])
+    return sorted(constitutions)
