@@ -7,6 +7,7 @@ import Ingredient from '../pages/Ingredient.vue'
 import Therapy from '../pages/Therapy.vue'
 import ConstitutionTest from '../pages/ConstitutionTest.vue'
 import SmartRecommend from '../pages/SmartRecommend.vue'
+import KnowledgeGraph from '../pages/KnowledgeGraph.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -16,7 +17,8 @@ const routes = [
   { path: '/ingredient', component: Ingredient },
   { path: '/therapy', component: Therapy },
   { path: '/constitution', component: ConstitutionTest },
-  { path: '/smart-recommend', component: SmartRecommend }
+  { path: '/smart-recommend', component: SmartRecommend },
+  { path: '/knowledge-graph', component: KnowledgeGraph }
 ]
 
 const router = createRouter({

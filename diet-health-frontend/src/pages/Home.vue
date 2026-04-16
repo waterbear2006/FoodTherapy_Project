@@ -348,15 +348,22 @@ function handleImageError(event) {
               <circle cx="50" cy="36" r="3" fill="currentColor" opacity="0.55"/>
             </svg>
             <svg v-else-if="item.icon === 'ai'" viewBox="0 0 64 64" class="shortcut-svg">
-              <!-- 颐宝 AI - 简约对话图标 -->
+              <!-- 颐宝 AI - AI 智能芯片图标 -->
               <circle cx="32" cy="32" r="28" fill="currentColor" opacity="0.08"/>
-              <!-- 对话气泡 -->
-              <ellipse cx="32" cy="30" rx="18" ry="14" fill="currentColor" opacity="0.85"/>
-              <path d="M20 38c0-4 6-8 12-8s12 4 12 8v6l-6-4-6 4v-6z" fill="currentColor" opacity="0.65"/>
-              <!-- 智能光点 -->
-              <circle cx="32" cy="26" r="4" fill="currentColor" opacity="0.95"/>
-              <circle cx="26" cy="32" r="2" fill="currentColor" opacity="0.75"/>
-              <circle cx="38" cy="32" r="2" fill="currentColor" opacity="0.75"/>
+              <!-- 芯片外框 -->
+              <rect x="22" y="22" width="20" height="20" rx="4" fill="currentColor" opacity="0.85"/>
+              <!-- 芯片内核 -->
+              <rect x="27" y="27" width="10" height="10" rx="2" fill="currentColor" opacity="0.65"/>
+              <!-- 四角连接点 -->
+              <circle cx="32" cy="20" r="2.5" fill="currentColor" opacity="0.85"/>
+              <circle cx="32" cy="44" r="2.5" fill="currentColor" opacity="0.85"/>
+              <circle cx="20" cy="32" r="2.5" fill="currentColor" opacity="0.85"/>
+              <circle cx="44" cy="32" r="2.5" fill="currentColor" opacity="0.85"/>
+              <!-- 连接线 -->
+              <line x1="32" y1="22.5" x2="32" y2="20" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+              <line x1="32" y1="44" x2="32" y2="41.5" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+              <line x1="22.5" y1="32" x2="20" y2="32" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+              <line x1="44" y1="32" x2="41.5" y2="32" stroke="currentColor" stroke-width="2" opacity="0.6"/>
             </svg>
             <svg v-else-if="item.icon === 'test'" viewBox="0 0 64 64" class="shortcut-svg">
               <!-- 体质测试 - 简约人像图标 -->
@@ -388,6 +395,36 @@ function handleImageError(event) {
             <div class="shortcut-desc">{{ item.desc }}</div>
           </div>
         </button>
+      </div>
+    </section>
+
+    <!-- 五行图谱横幅 -->
+    <section class="block">
+      <div class="wuxing-banner" @click="router.push('/knowledge-graph')">
+        <div class="wuxing-bg"></div>
+        <div class="wuxing-content">
+          <div class="wuxing-icon-wrapper">
+            <div class="wuxing-spinning-icon">
+              <svg viewBox="0 0 100 100" class="wuxing-svg">
+                <!-- 五行相生循环 -->
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+                <circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+                <!-- 五行元素 -->
+                <text x="50" y="20" text-anchor="middle" font-size="12" fill="currentColor" opacity="0.9">金</text>
+                <text x="80" y="55" text-anchor="middle" font-size="12" fill="currentColor" opacity="0.9">水</text>
+                <text x="50" y="90" text-anchor="middle" font-size="12" fill="currentColor" opacity="0.9">木</text>
+                <text x="20" y="55" text-anchor="middle" font-size="12" fill="currentColor" opacity="0.9">火</text>
+                <text x="50" y="50" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.6">土</text>
+              </svg>
+            </div>
+          </div>
+          <div class="wuxing-text">
+            <h3 class="wuxing-title">探索五行食疗宇宙：知识图谱</h3>
+            <p class="wuxing-desc">可视化呈现五行相生相克，解锁中医食疗智慧</p>
+          </div>
+          <div class="wuxing-arrow">›</div>
+        </div>
       </div>
     </section>
 
@@ -464,13 +501,16 @@ function handleImageError(event) {
 }
 
 .today-card {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(135deg, rgba(125, 157, 138, 0.82) 0%, rgba(90, 122, 104, 0.78) 100%);
   border-radius: var(--radius-lg);
   padding: 20px 20px 18px;
   box-shadow: var(--shadow-lg);
   color: #ffffff;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .today-card::before {
@@ -672,15 +712,16 @@ function handleImageError(event) {
 }
 
 .chip {
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(26, 163, 157, 0.35);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   color: #ffffff;
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .therapy-name {
@@ -688,6 +729,14 @@ function handleImageError(event) {
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.2px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(26, 163, 157, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: inline-block;
 }
 
 .today-tip {
@@ -715,59 +764,145 @@ function handleImageError(event) {
 
 .shortcut-row {
   display: flex;
-  justify-content: space-between;
   gap: 12px;
 }
 
 .shortcut-item {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   padding: 20px 14px 16px;
   border-radius: var(--radius-lg);
-  border: none;
-  background: var(--bg-card);
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(245, 250, 248, 0.95) 100%);
+  box-shadow: 
+    0 4px 16px rgba(125, 157, 138, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.shortcut-item::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.shortcut-item:hover {
+  transform: translateY(-6px);
+  box-shadow: 
+    0 12px 32px rgba(125, 157, 138, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  border-color: rgba(125, 157, 138, 0.3);
+}
+
+.shortcut-item:hover::before {
+  opacity: 1;
 }
 
 .shortcut-item:active {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px) scale(0.98);
+  box-shadow: 
+    0 6px 20px rgba(125, 157, 138, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .shortcut-icon {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-subtle) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
-  box-shadow: inset 0 2px 8px rgba(125, 157, 138, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 
+    inset 0 3px 12px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+/* 生成菜谱 - 浅橘色莫兰迪 */
+.shortcut-item:nth-child(1) .shortcut-icon {
+  background: linear-gradient(135deg, rgba(230, 180, 150, 0.4) 0%, rgba(240, 200, 170, 0.5) 50%, rgba(250, 220, 200, 0.6) 100%);
+}
+
+/* 颐宝 AI - 淡紫色莫兰迪 */
+.shortcut-item:nth-child(2) .shortcut-icon {
+  background: linear-gradient(135deg, rgba(200, 190, 220, 0.4) 0%, rgba(215, 205, 230, 0.5) 50%, rgba(230, 220, 240, 0.6) 100%);
+}
+
+/* 体质测试 - 淡蓝色莫兰迪 */
+.shortcut-item:nth-child(3) .shortcut-icon {
+  background: linear-gradient(135deg, rgba(180, 200, 220, 0.4) 0%, rgba(200, 215, 230, 0.5) 50%, rgba(220, 230, 240, 0.6) 100%);
+}
+
+/* 智能推荐 - 浅绿色莫兰迪 */
+.shortcut-item:nth-child(4) .shortcut-icon {
+  background: linear-gradient(135deg, rgba(190, 220, 200, 0.4) 0%, rgba(205, 230, 215, 0.5) 50%, rgba(220, 240, 230, 0.6) 100%);
+}
+
+.shortcut-item:hover .shortcut-icon {
+  transform: scale(1.12) rotate(-5deg);
+  box-shadow: 
+    inset 0 4px 16px rgba(0, 0, 0, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 .shortcut-item:active .shortcut-icon {
-  background: linear-gradient(135deg, var(--primary-light) 0%, rgba(125, 157, 138, 0.15) 100%);
-  transform: scale(1.05);
+  transform: scale(1.05) rotate(-3deg);
+  box-shadow: 
+    inset 0 3px 10px rgba(0, 0, 0, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .shortcut-svg {
-  width: 42px;
-  height: 42px;
-  color: var(--primary);
-  filter: drop-shadow(0 2px 6px rgba(125, 157, 138, 0.2));
-  transition: all 0.3s ease;
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.2));
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 生成菜谱 - 橘棕色 */
+.shortcut-item:nth-child(1) .shortcut-svg {
+  color: #c97c5d;
+}
+
+/* 颐宝 AI - 紫灰色 */
+.shortcut-item:nth-child(2) .shortcut-svg {
+  color: #8b7a9e;
+}
+
+/* 体质测试 - 蓝灰色 */
+.shortcut-item:nth-child(3) .shortcut-svg {
+  color: #5d7a8c;
+}
+
+/* 智能推荐 - 绿灰色 */
+.shortcut-item:nth-child(4) .shortcut-svg {
+  color: #6b8c7a;
+}
+
+.shortcut-item:hover .shortcut-svg {
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.3));
+  transform: scale(1.08);
 }
 
 .shortcut-item:active .shortcut-svg {
-  filter: drop-shadow(0 4px 12px rgba(125, 157, 138, 0.3));
-  transform: scale(1.05);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+  transform: scale(0.95);
 }
 
 .shortcut-text {
@@ -787,6 +922,112 @@ function handleImageError(event) {
   color: var(--text-muted);
   line-height: 1.5;
   font-weight: 400;
+}
+
+/* 五行图谱横幅 */
+.wuxing-banner {
+  position: relative;
+  background: linear-gradient(135deg, #f5f0e6 0%, #e8e0d0 50%, #d4c5b0 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(139, 119, 90, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(139, 119, 90, 0.2);
+}
+
+.wuxing-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 119, 90, 0.03) 2px,
+      rgba(139, 119, 90, 0.03) 4px
+    );
+  pointer-events: none;
+}
+
+.wuxing-banner:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 12px rgba(139, 119, 90, 0.1);
+}
+
+.wuxing-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.wuxing-icon-wrapper {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(139, 119, 90, 0.1) 0%, rgba(160, 140, 110, 0.15) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 8px rgba(139, 119, 90, 0.1);
+}
+
+.wuxing-spinning-icon {
+  width: 60px;
+  height: 60px;
+  animation: spin 20s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wuxing-svg {
+  width: 100%;
+  height: 100%;
+  color: #8b775a;
+}
+
+.wuxing-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.wuxing-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #5c4a3d;
+  margin: 0 0 6px;
+  letter-spacing: -0.2px;
+  line-height: 1.4;
+}
+
+.wuxing-desc {
+  font-size: 13px;
+  color: #8b775a;
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.wuxing-arrow {
+  font-size: 32px;
+  color: #a08c6e;
+  font-weight: 300;
+  opacity: 0.6;
 }
 
 .article-list {

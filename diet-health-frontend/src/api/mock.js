@@ -406,24 +406,41 @@ export const submitQuizAnswers = async (answers) => {
   try {
     console.log('📤 原始答案:', answers)
     
-    // 需要从题目中获取 category 信息
-    // 先获取题目列表
-    const questions = await getQuizQuestions()
-    console.log('📋 题目列表:', questions)
+    // 检查答案格式：如果是对象数组且包含 category 和 score，直接使用
+    let formattedAnswers = answers
     
-    // 将答案转换为后端需要的格式
-    const formattedAnswers = Object.keys(answers).map(questionId => {
-      const question = questions.find(q => String(q.id) === String(questionId))
-      const val = answers[questionId]
+    // 如果是旧格式（键值对），则转换为新格式
+    if (!Array.isArray(answers)) {
+      console.log('🔄 检测到旧格式答案，正在转换...')
+      // 需要从题目中获取 category 信息
+      const questions = await getQuizQuestions()
+      console.log('📋 题目列表:', questions)
       
-      // 如果 val 是数字，说明是 5 级评分；如果是文本且为'是'，给 5 分
-      let score = typeof val === 'number' ? val : (val === '是' ? 5 : 1)
+      formattedAnswers = Object.keys(answers).map(questionId => {
+        const question = questions.find(q => String(q.id) === String(questionId))
+        const val = answers[questionId]
+        
+        // 如果 val 是数字，说明是 5 级评分；如果是文本且为'是'，给 5 分
+        let score = typeof val === 'number' ? val : (val === '是' ? 5 : 1)
+        
+        return {
+          category: question?.category || '平和质',
+          score: score
+        }
+      })
+    } else if (answers.length > 0 && typeof answers[0] === 'object' && !answers[0].category) {
+      // 如果是简单对象数组（只有 id 和 score），需要补充 category
+      console.log('🔄 答案缺少 category，正在补充...')
+      const questions = await getQuizQuestions()
       
-      return {
-        category: question?.category || '平和质',
-        score: score
-      }
-    })
+      formattedAnswers = answers.map(ans => {
+        const question = questions.find(q => String(q.id) === String(ans.id))
+        return {
+          category: question?.category || '平和质',
+          score: ans.score
+        }
+      })
+    }
     
     console.log('📦 格式化后的答案:', formattedAnswers)
     

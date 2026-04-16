@@ -42,11 +42,25 @@ const finished = computed(() => {
 const hasQuestions = computed(() => questions.value.length > 0)
 
 const result = computed(() => {
-  if (!apiResult.value) return null
+  if (!apiResult.value) {
+    console.log('⚠️ apiResult.value 为空')
+    return null
+  }
   
-  // 后端返回格式：{ data: { constitutions: [...], description: '', is_combination: ... }, success: true }
+  console.log('🔍 apiResult.value 完整结构:', JSON.stringify(apiResult.value, null, 2))
+  
+  // 后端返回格式：{ data: { constitutions: [...], description: '', is_combination: ..., scores: {...} } }
   const apiData = apiResult.value.data || apiResult.value
-  const { constitutions, is_combination, scores, description } = apiData
+  const { constitutions, is_combination, description } = apiData
+  
+  // 获取体质向量（九维得分）- 优先使用 scores 字段
+  let scores = apiData.scores || apiData.constitution_vector || {}
+  
+  console.log(' apiResult.value:', apiResult.value)
+  console.log('🔍 apiData:', apiData)
+  console.log('📊 scores 来源:', apiData.scores ? 'scores' : (apiData.constitution_vector ? 'constitution_vector' : '空对象'))
+  console.log('📊 scores:', scores)
+  console.log('📊 scores keys:', Object.keys(scores))
   
   if (!constitutions || !Array.isArray(constitutions) || constitutions.length === 0) {
     console.warn('⚠️ 体质数据为空，使用默认值')
@@ -58,7 +72,7 @@ const result = computed(() => {
   // 保持原始名称用于查找
   let mainConstitution = mainConstitutionRaw
   
-  console.log('📊 体质结果:', {
+  console.log(' 体质结果:', {
     raw: mainConstitutionRaw,
     normalized: mainConstitution,
     is_combination,
@@ -128,8 +142,12 @@ const result = computed(() => {
   return {
     type: mainConstitution,
     is_combination,
-    scores,
-    ...info
+    scores, // 九维体质向量（用于雷达图）
+    feature: info.feature,
+    diet: info.diet,
+    foods: info.foods,
+    therapies: info.therapies,
+    description
   }
 })
 
@@ -153,8 +171,13 @@ async function loadQuestions() {
 }
 
 function choose(score) {
-  const questionId = String(currentQuestion.value.id)
-  answers.value[questionId] = score
+  const question = currentQuestion.value
+  // 使用题目 ID 作为键存储答案
+  answers.value[String(question.id)] = {
+    id: question.id,
+    category: question.category,
+    score: score
+  }
   
   if (currentIndex.value < questions.value.length - 1) {
     currentIndex.value += 1
@@ -174,7 +197,13 @@ async function submitAnswers() {
   loading.value = true
   try {
     console.log('📤 开始提交答案...')
-    const result = await submitQuizAnswers(answers.value)
+    console.log('📦 原始答案对象:', answers.value)
+    
+    // 将答案转换为数组格式
+    const answersArray = Object.values(answers.value)
+    console.log('📦 转换后的答案数组:', answersArray)
+    
+    const result = await submitQuizAnswers(answersArray)
     console.log('✅ 答案提交成功，设置 apiResult')
     apiResult.value = result
     currentIndex.value = questions.value.length
@@ -207,6 +236,21 @@ async function saveToHealthArchive() {
     return
   }
   
+  // 确保 scores 是普通对象，不是 Proxy
+  let scoresToSave = result.value.scores || {}
+  console.log('🔍 原始 scores:', scoresToSave)
+  console.log('🔍 scores 类型:', typeof scoresToSave)
+  
+  // 如果是 Proxy 对象，转换为普通对象
+  if (scoresToSave && typeof scoresToSave === 'object') {
+    try {
+      scoresToSave = JSON.parse(JSON.stringify(scoresToSave))
+      console.log('✅ scores 已转换为普通对象:', scoresToSave)
+    } catch (e) {
+      console.error('❌ scores 序列化失败:', e)
+    }
+  }
+  
   const record = {
     id: Date.now(),
     date: new Date().toISOString().split('T')[0],
@@ -217,7 +261,7 @@ async function saveToHealthArchive() {
     details: {
       constitution: result.value.type, // 这个字段会被 Profile.vue 读取
       isCombination: result.value.is_combination,
-      scores: result.value.scores,
+      scores: scoresToSave, // 使用序列化后的 scores
       feature: result.value.feature,
       diet: result.value.diet,
       foods: result.value.foods,
@@ -233,6 +277,8 @@ async function saveToHealthArchive() {
   }
   
   console.log('📦 准备保存的体质数据:', record)
+  console.log('📦 record.details.scores:', record.details.scores)
+  console.log('📦 record.details.scores keys:', Object.keys(record.details.scores))
   
   // 保存到 localStorage
   const existing = JSON.parse(localStorage.getItem('healthArchive') || '[]')
@@ -325,14 +371,21 @@ const radarGrids = [20, 40, 60, 80, 100].map(level => {
 })
 
 const radarPoints = computed(() => {
-  if (!result.value || !result.value.scores) return ''
+  if (!result.value || !result.value.scores) {
+    console.log('⚠️ radarPoints: result.value 或 scores 为空')
+    return ''
+  }
+  
   const scores = result.value.scores
+  console.log(' radarPoints 获取到的 scores:', scores)
+  
   const categories = ['平和质', '气虚质', '阳虚质', '阴虚质', '痰湿质', '湿热质', '血瘀质', '气郁质', '特禀质']
   const angleStep = (Math.PI * 2) / 9
   
   return categories.map((cat, i) => {
-    // 获取转化分，如果没有则默认为8（为了图形饱满感，且保证转化分显示比例）
+    // 获取转化分，如果没有则默认为 8（为了图形饱满感，且保证转化分显示比例）
     const score = Math.max(scores[cat] || 0, 8)
+    console.log(`  ${cat}: ${score}`)
     const r = (score / 100) * 100
     const x = 150 + Math.cos(angleStep * i - Math.PI / 2) * r
     const y = 150 + Math.sin(angleStep * i - Math.PI / 2) * r
@@ -378,9 +431,13 @@ onMounted(() => {
           constitutions: [constitutionRecord.details.constitution],
           description: `您的主体质是 ${constitutionRecord.details.constitution}`,
           is_combination: constitutionRecord.details.isCombination || false,
-          scores: constitutionRecord.details.scores || {}
+          scores: constitutionRecord.details.scores || {},
+          constitution_vector: constitutionRecord.details.scores || {}
         }
       }
+      
+      console.log('🔍 加载的 scores:', apiResult.value.data.scores)
+      console.log('🔍 加载的 constitution_vector:', apiResult.value.data.constitution_vector)
       
       // 恢复用户信息
       if (constitutionRecord.details.userInfo) {

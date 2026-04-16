@@ -20,6 +20,17 @@ const selectedRecipe = ref(null)
 // 是否显示详情弹窗
 const showDetailModal = ref(false)
 
+// 计算缺失食材
+function getMissingIngredients(recipe) {
+  if (!recipe.ingredients || !recipe.matched_ingredients) return []
+  
+  const allIngredients = recipe.ingredients
+  const matched = recipe.matched_ingredients || []
+  
+  // 缺失食材 = 所有食材 - 已匹配食材
+  return allIngredients.filter(ing => !matched.includes(ing))
+}
+
 // 格式化制作步骤
 const formattedSteps = computed(() => {
   if (!selectedRecipe.value?.steps) return []
@@ -252,9 +263,16 @@ function removeIngredient(name) {
             <p class="recipe-effect">{{ recipe.effect }}</p>
             <div class="recipe-meta">
               <span class="meta-tag match">匹配度 {{ Math.round(recipe.match_score * 100) }}%</span>
-              <span v-if="recipe.matched_ingredients.length > 0" class="meta-tag matched">
-                已匹配 {{ recipe.matched_ingredients.length }} 种食材
+              <span v-if="recipe.matched_ingredients && recipe.matched_ingredients.length > 0" class="meta-tag matched">
+                已匹配 {{ recipe.matched_ingredients.length }} 种
               </span>
+              <span v-if="getMissingIngredients(recipe).length > 0" class="meta-tag missing">
+                还需购买 {{ getMissingIngredients(recipe).length }} 种
+              </span>
+            </div>
+            <div v-if="getMissingIngredients(recipe).length > 0" class="missing-ingredients">
+              <span class="missing-label">缺：</span>
+              <span class="missing-list">{{ getMissingIngredients(recipe).join('、') }}</span>
             </div>
           </div>
           <div class="recipe-arrow">›</div>
@@ -694,10 +712,37 @@ function removeIngredient(name) {
   color: #34c759;
 }
 
+.meta-tag.missing {
+  background: rgba(255, 149, 0, 0.1);
+  color: #ff9500;
+  font-weight: 600;
+}
+
 .recipe-arrow {
   font-size: 24px;
   color: #ccc;
   font-weight: 300;
+}
+
+.missing-ingredients {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 149, 0, 0.08);
+  border-radius: 8px;
+  border-left: 3px solid #ff9500;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.missing-label {
+  font-weight: 600;
+  color: #ff9500;
+  margin-right: 4px;
+}
+
+.missing-list {
+  color: #cc7a00;
+  font-weight: 500;
 }
 
 .empty-state {

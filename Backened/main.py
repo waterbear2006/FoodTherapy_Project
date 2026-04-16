@@ -23,11 +23,13 @@ app = FastAPI(title="食疗养生推荐系统 API", version="1.0.0")
 # 添加 CORS 中间件，允许前端跨域访问
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有来源
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],  # 允许所有来源
     allow_credentials=True,
     allow_methods=["*"],  # 允许所有 HTTP 方法
     allow_headers=["*"],  # 允许所有 HTTP 头
 )
+
+print("✅ CORS 中间件已配置")
 
 # 挂载静态文件目录，提供图片访问
 BASE_DIR = Path(__file__).resolve().parent

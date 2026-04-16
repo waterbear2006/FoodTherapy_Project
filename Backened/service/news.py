@@ -8,8 +8,7 @@ from html import unescape
 
 RSS_URLS = [
     "https://www.chinanews.com.cn/rss/jk.xml",
-    "https://www.chinanews.com.cn/rss/life.xml",
-    "http://www.chinadaily.com.cn/rss/lifestyle_rss.xml"
+    "https://www.chinanews.com.cn/rss/life.xml"
 ]
 
 
