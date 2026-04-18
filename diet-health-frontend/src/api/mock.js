@@ -18,7 +18,7 @@ const defaultImage = 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
 
 // ========== API 缓存层 (方案 B) ==========
 const apiCache = new Map()
-const CACHE_TTL = 300000 // 5 分钟过期
+const CACHE_TTL = 0 // 禁用缓存以便测试
 
 /**
  * 包装异步请求，增加内存缓存逻辑
@@ -83,7 +83,7 @@ export const getIngredientCategoryList = async () => {
 
 // 获取食材列表
 export const getIngredientList = async (category = '全部', keyword = '') => {
-  const cacheKey = `ingredients:${category}:${keyword}`
+  const cacheKey = `ingredients_v2:${category}:${keyword}`
   return withCache(cacheKey, async () => {
     try {
       const params = {
@@ -100,6 +100,7 @@ export const getIngredientList = async (category = '全部', keyword = '') => {
         avoid: item.avoid,
         methods: item.methods,
         tag: item.tag,
+        ancient_books: item.ancient_books,
         image: item.images ? `http://127.0.0.1:8001/data/Shicaiimages/${item.images}` : defaultImage
       }))
     } catch (error) {
@@ -118,6 +119,11 @@ export const searchIngredients = async (keyword) => {
       id: item.id,
       name: item.name,
       effect: item.effect,
+      suitable: item.suitable,
+      avoid: item.avoid,
+      methods: item.methods,
+      tag: item.tag,
+      ancient_books: item.ancient_books,
       image: item.images ? `http://127.0.0.1:8001/data/Shicaiimages/${item.images}` : defaultImage
     }))
   } catch (error) {
@@ -142,6 +148,7 @@ export const getPopularTherapy = async () => {
         ingredients: Array.isArray(item.ingredients) ? item.ingredients : (item.ingredients ? item.ingredients.split('、') : []),
         method: Array.isArray(item.steps) ? item.steps.join('\n') : item.steps,
         taboo: item.taboo || '无',
+        ancient_books: item.ancient_books,
         image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
       }))
     } catch (error) {
@@ -179,6 +186,7 @@ export const getTherapyList = async (category = '', keyword = '') => {
         suitable: item.suitable, // 保留原始适合体质给弹窗
         images: item.images, // 保留原始图片给弹窗
         taboo: item.taboo, // 保留禁忌给弹窗
+        ancient_books: item.ancient_books, // 保留古籍记载给弹窗
         buttonText: '查看详情',
         primaryButton: true,
         image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
@@ -211,6 +219,7 @@ export const searchTherapy = async (keyword) => {
       title: item.name,
       effect: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
       tags: Array.isArray(item.suitable) ? item.suitable : [],
+      ancient_books: item.ancient_books,
       image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
     }))
   } catch (error) {

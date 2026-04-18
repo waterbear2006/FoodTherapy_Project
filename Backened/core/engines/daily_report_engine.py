@@ -387,7 +387,7 @@ class DailyReportEngine:
             result = json.loads(response.choices[0].message.content)
             return result.get("intro", ""), result.get("report_text", ""), result.get("tip", "")
         except Exception as e:
-            print(f"⚠️ [DailyReport Engine] AI 生成超时或失败，退化为规则模板：{e}")
+            print(f"[DailyReport Engine] AI 生成超时或失败，退化为规则模板: {e}")
             return None
 
     async def get_daily_report(

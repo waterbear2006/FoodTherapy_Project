@@ -152,6 +152,17 @@ function handleClose() {
           </h3>
           <p class="warning-text">{{ therapy.taboo }}</p>
         </section>
+
+        <!-- 古籍记载 -->
+        <section v-if="therapy?.ancient_books" class="detail-block ancient-books">
+          <h3 class="block-title">
+            <span class="icon">📜</span>
+            古籍参考
+          </h3>
+          <div class="ancient-books-content">
+             <p class="ancient-text">{{ therapy.ancient_books }}</p>
+          </div>
+        </section>
       </div>
     </div>
   </transition>
@@ -296,6 +307,29 @@ function handleClose() {
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 12px;
+}
+
+/* 古籍记载 */
+.ancient-books {
+  background: #fdfaf3;
+  border-left: 3px solid #d4a373;
+}
+
+.ancient-books-content {
+  padding: 10px 14px;
+  background: #fbf5eb;
+  border-radius: 8px;
+  font-style: italic;
+  position: relative;
+}
+
+.ancient-text {
+  font-size: 15px;
+  color: #5c4d3c;
+  line-height: 1.7;
+  margin: 0;
+  font-family: 'Kaiti', 'STKaiti', serif;
+  white-space: pre-line; /* 保持换行 */
 }
 
 .block-title .icon {

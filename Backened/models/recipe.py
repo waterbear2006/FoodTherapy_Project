@@ -6,7 +6,7 @@
 - 支持食材列表、功效列表、适合体质列表的存储
 - 为 FastAPI 提供数据验证和序列化支持
 """
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -20,3 +20,4 @@ class Recipe(BaseModel):
     steps: str = ""                                      # 制作步骤
     images: str = ""                                     # 图片文件名
     taboo: str = ""                                      # 忌口
+    ancient_books: Optional[str] = None                  # 古籍记载内容

@@ -63,7 +63,8 @@ def load_recipe_data(file_path: Union[str, Path]) -> List[Recipe]:
                     suitable=suitable,
                     steps=steps,
                     images=images,
-                    taboo=taboo
+                    taboo=taboo,
+                    ancient_books=row.get('AncientBooks', '') or row.get('ancient_books', '')
                 )
                 
                 recipe_items.append(recipe_item)

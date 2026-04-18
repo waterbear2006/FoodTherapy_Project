@@ -112,6 +112,7 @@ async def search_ingredients(
             or _contains(item, "suitable")
             or _contains(item, "avoid")
             or _contains(item, "methods")
+            or _contains(item, "ancient_books")
         ]
     
     # 按功效标签筛选

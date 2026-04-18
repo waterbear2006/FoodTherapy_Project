@@ -16,6 +16,7 @@ from models.recipe import Recipe
 from core.structures.trie import Trie
 from core.structures.hash_index import HashIndex
 from core.structures.lru_cache import LRUCache
+from core.preloader import ingredient_db
 
 
 class RecipeService:
@@ -88,6 +89,27 @@ class RecipeService:
             # 构建适合体质索引
             for suitable in recipe.suitable:
                 self.suitable_index.add(suitable, recipe.id)
+            
+            # 【新功能】富化古籍记载内容
+            # 从食材库中提取古籍记载，组合成菜谱的古籍参考
+            ancient_books_list = []
+            
+            # 如果食谱本身在 CSV 中就有古籍记载，先保留
+            if getattr(recipe, 'ancient_books', None):
+                ancient_books_list.append(f"{recipe.name}：「{recipe.ancient_books}」")
+
+            for ingredient_name in recipe.ingredients:
+                # 尝试从 ingredient_db 中查找对应的食材
+                # 注意：ingredient_db 的键是 ID，而 recipe.ingredients 是名称列表
+                # 我们需要通过名称反查 ID，或者遍历 ingredient_db
+                for ing in ingredient_db.values():
+                    if ing["name"] == ingredient_name and ing.get("ancient_books"):
+                        # 格式化：食材名：「古籍内容」
+                        ancient_books_list.append(f"{ing['name']}：{ing['ancient_books']}")
+                        break
+            
+            if ancient_books_list:
+                recipe.ancient_books = "\n".join(ancient_books_list)
         
         return len(self.recipes)
 

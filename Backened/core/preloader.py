@@ -18,7 +18,11 @@ ingredient_db = {}  # 全局食材数据库
 
 def load_all_data():
     """系统启动时调用的主加载函数"""
-    base_path = Path(__file__).resolve().parent.parent / "data"
+    import sys
+    if getattr(sys, 'frozen', False):
+        base_path = Path(sys._MEIPASS) / "data"
+    else:
+        base_path = Path(__file__).resolve().parent.parent / "data"
     
     # --- 加载食材数据 ---
     ingredients_file = base_path / "shicai .csv"
@@ -38,6 +42,7 @@ def load_all_data():
                     "avoid": row["avoid"],
                     "methods": row["methods"],
                     "images": row["images"].strip(),
+                    "ancient_books": row.get("AncientBooks", ""),
                     "category": row["tag"] if row.get("tag") else "其他",  # 使用 tag 作为分类
                     "property": None,  # 可根据需要补充
                     "description": None,  # 可根据需要补充

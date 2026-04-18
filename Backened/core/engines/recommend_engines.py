@@ -31,7 +31,7 @@ class RecommendEngine:
             )
         else:
             self.client = None
-            print("⚠️ [RecommendEngine] 警告：未设置 AI_API_KEY 环境变量，将使用默认推荐理由")
+            print("[RecommendEngine] 警告：未设置 AI_API_KEY 环境变量，将使用默认推荐理由")
         
         # 智能推荐理由本地缓存
         self._ai_cache = {}
@@ -210,10 +210,10 @@ class RecommendEngine:
             )
             reasons = json.loads(response.choices[0].message.content)
             self._ai_cache[cache_key] = reasons
-            print(f"📖 [AI Debug] 成功获取理由 (耗时 {time.time()-start:.1f}s)")
+            print(f"[AI Debug] 成功获取理由 (耗时 {time.time()-start:.1f}s)")
             return reasons
         except Exception as e:
-            print(f"⚠️ [AI Debug] 启动名医兜底: {e}")
+            print(f"[AI Debug] 启动名医兜底: {e}")
             return self._get_fallback_reasons(constitution, solar_term, items)
 
     def _get_fallback_reasons(self, constitution: str, solar_term: str, items: list) -> dict:

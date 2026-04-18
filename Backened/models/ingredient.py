@@ -21,4 +21,5 @@ class Ingredient(BaseModel):
     category: Optional[str] = None  # 分类：五谷、蔬菜、肉禽等（可选）
     property: Optional[str] = None  # 性味：如“寒”、“温”（可选）
     description: Optional[str] = None  # 详细描述（可选）
+    ancient_books: Optional[str] = None  # 古籍记载内容
     related_recipes: Optional[List[int]] = [] # 关联的食疗方 ID 集合
