@@ -1,0 +1,41 @@
+# =======================
+# 根目录全局忽略
+# =======================
+.vscode/
+.idea/
+.DS_Store
+
+# =======================
+# Conda 虚拟环境
+# =======================
+food_therapy_env/
+venv/
+env/
+
+# =======================
+# 后端 (FastAPI)
+# =======================
+Backened/__pycache__/
+Backened/**/*.pyc
+Backened/.env
+Backened/app.db
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+Backened/*.log
+Backened/tcm_chroma_db/
+Backened/.env
+
+# =======================
+# 前端 (Vue + Vite)
+# =======================
+# Node.js
+node_modules/
+dist/
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+diet-health-frontend/.pnpm-debug.log*
