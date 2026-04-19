@@ -1,0 +1,421 @@
+:root {
+  /* Apple / Zen Design System - 高端极简毛玻璃风格 */
+  --primary: #5a7b68;        /* 禅意绿 */
+  --primary-light: #f2f7f4;  /* 淡青背景 */
+  --primary-dark: #3e5649;   /* 深墨绿 */
+  --accent: #b08e6b;         /* 赭石色 (用于古籍标题) */
+  --accent-light: #faf6f0;   /* 宣纸淡白 */
+  
+  /* 苹果风格系统色 */
+  --bg-ios: #F2F2F7;         /* iOS 系统背景灰 */
+  --bg-card: rgba(255, 255, 255, 0.72); /* 半透明卡片基色 */
+  --text: #1d1d1f;           /* Apple 标题文字色 */
+  --text-secondary: #86868b;  /* Apple 次要文字色 */
+  --text-muted: #aeaeb2;     /* 禁用状态文字色 */
+  
+  /* 毛玻璃与投影 */
+  --glass: blur(20px) saturate(180%);
+  --border-glass: rgba(255, 255, 255, 0.4);
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 20px 80px rgba(0, 0, 0, 0.12);
+  
+  /* 圆角与间距 */
+  --radius-xl: 24px;
+  --radius-lg: 20px;
+  --radius: 16px;
+  --radius-sm: 12px;
+  
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 20px;
+  --spacing-lg: 28px;
+  --spacing-xl: 36px;
+
+  --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  --heading: var(--sans);
+  font: 16px/1.5 var(--sans);
+  color: var(--text);
+  background: var(--bg-ios);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 全局滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--sans);
+  background-color: var(--bg-ios);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+#app {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding-bottom: 72px;
+  box-sizing: border-box;
+  background: var(--bg-ios);
+  position: relative;
+}
+
+.app-page {
+  padding: 16px;
+  min-height: calc(100vh - 72px);
+  box-sizing: border-box;
+}
+
+/* 宣纸感区块 (用于渲染古籍引用) */
+.rice-paper-block {
+  background: #fdfaf5;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  border-left: 4px solid var(--accent);
+  padding: 16px;
+  margin: 12px 0;
+  border-radius: 4px 14px 14px 4px;
+  box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.8);
+  font-family: "PingFang SC", "STKaiti", serif;
+  color: #5c4b37;
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+/* 笔墨晕染进入动画 */
+.ink-wash-fade-in {
+  animation: inkSpread 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  opacity: 0;
+  filter: blur(12px) brightness(1.2);
+}
+
+/* 向上滑动进入动画 (用于弹窗) */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.32, 1, 0.23, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+/* 悬浮胶囊型抽屉 (Apple Floating Capsule) */
+.bottom-drawer-fixed {
+  position: fixed !important;
+  bottom: 24px !important; /* 向上悬浮 */
+  left: 12px !important;
+  right: 12px !important;
+  top: auto !important;
+  width: calc(100% - 24px) !important;
+  max-width: 456px !important; /* 480 - 24 */
+  margin: 0 auto !important;
+  max-height: 50vh !important; /* 稍微增加高度，防止被裁切 */
+  border-radius: 28px !important; /* 全圆角胶囊感 */
+  z-index: 10001 !important; 
+  box-shadow: 0 12px 48px rgba(0,0,0,0.16) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.4s cubic-bezier(0.32, 1, 0.23, 1) !important;
+}
+
+.bottom-drawer-fixed .hier-sheet-content {
+  overflow-y: auto !important;
+  flex: 1;
+}
+
+@keyframes inkSpread {
+  0% { opacity: 0; filter: blur(12px) brightness(1.2); transform: translateY(10px) scale(0.98); }
+  60% { opacity: 0.8; filter: blur(4px); }
+  100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--heading);
+  color: var(--text-h);
+  line-height: 1.3;
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 20px 0 12px;
+}
+
+h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0 0 10px;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  margin: 0 0 8px;
+}
+
+h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+/* #app 见 :root 后 */
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
