@@ -15,7 +15,7 @@ const imageUrl = computed(() => {
   if (!props.ingredient?.images) return ''
   // 确保图片路径正确拼接
   const imageName = props.ingredient.images.trim()
-  return `http://127.0.0.1:8001/data/Shicaiimages/${imageName}`
+  return `/data/Shicaiimages/${imageName}`
 })
 
 // 功效标签数组

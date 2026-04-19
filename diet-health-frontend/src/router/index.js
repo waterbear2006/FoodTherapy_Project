@@ -8,7 +8,7 @@ import Therapy from '../pages/Therapy.vue'
 import ConstitutionTest from '../pages/ConstitutionTest.vue'
 import SmartRecommend from '../pages/SmartRecommend.vue'
 import KnowledgeGraph from '../pages/KnowledgeGraph.vue'
-import CheckIn from '../pages/CheckIn.vue'
+import CheckIn from '../pages/CheckIN.vue'
 
 const routes = [
   { path: '/', component: Home },

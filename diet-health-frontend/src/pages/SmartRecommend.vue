@@ -78,7 +78,7 @@ onMounted(async () => {
     }
     
     // 2. 调用后端推荐 API
-    const response = await fetch(`http://127.0.0.1:8001/api/recommend/daily?user_id=user_${Date.now()}&constitution=${encodeURIComponent(constitution)}&age=${age}&gender=${encodeURIComponent(gender)}${weatherQuery}`)
+    const response = await fetch(`/api/recommend/daily?user_id=user_${Date.now()}&constitution=${encodeURIComponent(constitution)}&age=${age}&gender=${encodeURIComponent(gender)}${weatherQuery}`)
     const recommendData = await response.json()
     
     console.log('✅ 后端推荐数据:', recommendData)
@@ -138,7 +138,7 @@ onMounted(async () => {
         name: firstRecipe.title || '推荐菜谱',
         desc: firstRecipe.reason || '',
         ancient_quote: firstRecipe.ancient_quote || '',
-        image: firstRecipe.image ? `http://127.0.0.1:8001/data/Caipuimages/${firstRecipe.image}` : 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
+        image: firstRecipe.image ? `/data/Caipuimages/${firstRecipe.image}` : 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
       }
       console.log('🍳 菜谱推荐:', recipe.value)
     } else {
@@ -153,7 +153,7 @@ onMounted(async () => {
         name: item.title,
         effect: item.reason || '',
         ancient_quote: item.ancient_quote || '',
-        image: item.image ? `http://127.0.0.1:8001/data/Shicaiimages/${item.image}` : 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
+        image: item.image ? `/data/Shicaiimages/${item.image}` : 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
       }))
       console.log('🥬 食材推荐:', ingredients.value)
     } else {

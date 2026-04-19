@@ -12,7 +12,7 @@ const emit = defineEmits(['close'])
 const imageUrl = computed(() => {
   if (!props.recipe?.images) return ''
   const imageName = props.recipe.images.trim()
-  return `http://127.0.0.1:8001/data/Caipuimages/${imageName}`
+  return `/data/Caipuimages/${imageName}`
 })
 
 const suitableTags = computed(() => {

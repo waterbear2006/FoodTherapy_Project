@@ -6,7 +6,7 @@ import axios from 'axios'
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8001/api',
+  baseURL: '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -101,7 +101,7 @@ export const getIngredientList = async (category = '全部', keyword = '') => {
         methods: item.methods,
         tag: item.tag,
         ancient_quote: item.ancient_quote || '',
-        image: item.images ? `http://127.0.0.1:8001/data/Shicaiimages/${item.images}` : defaultImage
+        image: item.images ? `/data/Shicaiimages/${item.images}` : defaultImage
       }))
     } catch (error) {
       console.error('获取食材列表失败:', error)
@@ -120,7 +120,7 @@ export const searchIngredients = async (keyword) => {
       name: item.name,
       effect: item.effect,
       ancient_quote: item.ancient_quote || '',
-      image: item.images ? `http://127.0.0.1:8001/data/Shicaiimages/${item.images}` : defaultImage
+      image: item.images ? `/data/Shicaiimages/${item.images}` : defaultImage
     }))
   } catch (error) {
     console.error('搜索食材失败:', error)
@@ -145,7 +145,7 @@ export const getPopularTherapy = async () => {
         method: Array.isArray(item.steps) ? item.steps.join('\n') : item.steps,
         taboo: item.taboo || '无',
         ancient_quote: item.ancient_quote || '',
-        image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
+        image: item.images ? `/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
       }))
     } catch (error) {
       console.error('获取热门食疗失败:', error)
@@ -185,7 +185,7 @@ export const getTherapyList = async (category = '', keyword = '') => {
         ancient_quote: item.ancient_quote || '',
         buttonText: '查看详情',
         primaryButton: true,
-        image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
+        image: item.images ? `/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
       }))
     } catch (error) {
       console.error('获取食疗列表失败:', error)
@@ -215,7 +215,7 @@ export const searchTherapy = async (keyword) => {
       title: item.name,
       effect: Array.isArray(item.effect) ? item.effect.join('、') : item.effect,
       tags: Array.isArray(item.suitable) ? item.suitable : [],
-      image: item.images ? `http://127.0.0.1:8001/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
+      image: item.images ? `/data/Caipuimages/${item.images}${item.images.endsWith('.png') ? '' : '.png'}` : defaultImage
     }))
   } catch (error) {
     console.error('搜索食疗失败:', error)
@@ -275,7 +275,7 @@ export const generateRecipe = async (ingredients) => {
       stars: 3,
       name: data.name,
       desc: data.description,
-      image: data.images ? `http://127.0.0.1:8001/data/Caipuimages/${data.images}` : defaultImage
+      image: data.images ? `/data/Caipuimages/${data.images}` : defaultImage
     }
   } catch (error) {
     console.error('生成菜谱失败:', error)

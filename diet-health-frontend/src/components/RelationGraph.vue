@@ -46,7 +46,7 @@ const getRoleFullCN = (role) => {
 const loadGraphData = async (nodeName, isIncremental = false) => {
   loading.value = true
   try {
-    const response = await axios.get(`http://127.0.0.1:8001/api/graph/detail?name=${encodeURIComponent(nodeName)}&depth=1`)
+    const response = await axios.get(`/api/graph/detail?name=${encodeURIComponent(nodeName)}&depth=1`)
     const { nodes, links, categories: cats } = response.data
     categories.value = cats
 
@@ -135,9 +135,9 @@ const initChart = () => {
         const categoryId = node.category // 0:食材, 1:菜谱, 2+:分类
         
         let apiUrl = ''
-        if (categoryId === 0) apiUrl = `http://127.0.0.1:8001/api/ingredients/detail/${encodeURIComponent(node.name)}`
-        else if (categoryId === 1) apiUrl = `http://127.0.0.1:8001/api/recipes/detail/${encodeURIComponent(node.name)}`
-        else apiUrl = `http://127.0.0.1:8001/api/categories/${encodeURIComponent(node.name)}`
+        if (categoryId === 0) apiUrl = `/api/ingredients/detail/${encodeURIComponent(node.name)}`
+        else if (categoryId === 1) apiUrl = `/api/recipes/detail/${encodeURIComponent(node.name)}`
+        else apiUrl = `/api/categories/${encodeURIComponent(node.name)}`
 
         try {
           const response = await axios.get(apiUrl)

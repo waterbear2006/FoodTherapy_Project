@@ -1,3 +1,4 @@
+console.log("【颐宝探针】main.js 开始执行了！");
 import { createApp } from 'vue'
 import App from './App.vue'
 
