@@ -156,7 +156,7 @@ function handleClose() {
             药食关联图谱
           </h3>
           <div class="graph-container">
-            <RelationGraph :center-node="ingredient?.name" />
+            <RelationGraph :centerNode="ingredient?.name" />
           </div>
         </section>
 

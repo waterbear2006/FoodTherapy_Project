@@ -20,11 +20,12 @@ router = APIRouter(tags=["AI 食疗助手"])
 API_KEY = os.getenv("DEEPSEEK_API_KEY")
 BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 
+client = None
 if not API_KEY:
-    print("⚠️ 警告: DEEPSEEK_API_KEY 未找到，AI 功能将受限")
-
-# 初始化 OpenAI 兼容客户端
-client = AsyncOpenAI(api_key=API_KEY, base_url=BASE_URL)
+    print("警告: DEEPSEEK_API_KEY 未找到，AI 功能将受限")
+else:
+    # 初始化 OpenAI 兼容客户端
+    client = AsyncOpenAI(api_key=API_KEY, base_url=BASE_URL)
 
 YIBAO_SYSTEM_PROMPT = """你现在的身份是一位名叫“颐宝”的古风小生。你出身中医世家，饱读诗书，但你生活在现代，是一位温柔、细心且懂科学的调理专家。
 
@@ -98,7 +99,10 @@ class FoodTherapyAssistant:
     def __init__(self):
         self.api_key = os.getenv("DEEPSEEK_API_KEY")
         self.base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-        self.client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+        if self.api_key:
+            self.client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+        else:
+            self.client = None
     
     async def ask(self, user_input: str) -> str:
         """异步向 DeepSeek 提问，返回食疗建议"""

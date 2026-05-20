@@ -45,13 +45,13 @@
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import List, Optional
 from pathlib import Path
-import re
 from pydantic import BaseModel
 import anyio
 
 from models.ingredient import Ingredient
 from core.preloader import ingredient_db, ingredient_trie
 from core.search.recipe_service import RecipeService
+from core.search.matching import split_multi, matches_ingredient_keyword
 import time
 
 router = APIRouter(tags=["搜索模块"])
@@ -67,12 +67,6 @@ if _caipu_path.exists():
 else:
     print(f"[Search] 未找到数据文件: {_caipu_path}")
 
-
-def split_multi(value: Optional[str]) -> List[str]:
-    """把 CSV 的"多值字段"拆成数组（兼容 、/，/空格 等分隔符）。"""
-    if not value:
-        return []
-    return [p.strip() for p in re.split(r"[、，,/;\s]+", value) if p.strip()]
 
 @router.get("/ingredients", response_model=List[Ingredient])
 async def search_ingredients(
@@ -92,26 +86,10 @@ async def search_ingredients(
     # 初始化为所有食材
     results = list(ingredient_db.values())
     
-    # 关键词搜索：支持食材名/功效/适合体质/禁忌/方法 的包含匹配
     if keyword:
-        kw = keyword.strip()
-        matched_names = ingredient_trie.search_prefix(kw)
-
-        def _contains(item: dict, field: str) -> bool:
-            val = item.get(field)
-            if not val:
-                return False
-            return kw in str(val)
-
         results = [
             item for item in results
-            if item.get("name") in matched_names
-            or kw in str(item.get("name", ""))
-            or _contains(item, "tag")
-            or _contains(item, "effect")
-            or _contains(item, "suitable")
-            or _contains(item, "avoid")
-            or _contains(item, "methods")
+            if matches_ingredient_keyword(item, keyword, ingredient_trie.search_prefix)
         ]
     
     # 按功效标签筛选
@@ -122,9 +100,12 @@ async def search_ingredients(
     if suitable:
         results = [item for item in results if suitable in split_multi(item.get("suitable"))]
     
-    # 按分类筛选
-    if category:
-        results = [item for item in results if item["category"] == category]
+    # 按分类筛选（tag 可能含多个标签，需按拆分后的单项匹配）
+    if category and category != "全部":
+        results = [
+            item for item in results
+            if category in split_multi(item.get("category") or item.get("tag", ""))
+        ]
     
     return results
 
@@ -157,16 +138,7 @@ async def get_all_categories():
     """
     categories = set()
     for ingredient in ingredient_db.values():
-        # 从 tag 字段提取分类，支持多个标签（如"补气、滋阴"）
-        tag_str = ingredient.get("tag", "")
-        if tag_str:
-            # 处理多种分隔符：、，,/
-            import re
-            tags = re.split(r'[、，,\/\s]+', tag_str)
-            for tag in tags:
-                tag = tag.strip()
-                if tag:
-                    categories.add(tag)
+        categories.update(split_multi(ingredient.get("tag", "")))
     
     # 添加"全部"选项并排序
     sorted_categories = sorted(categories)

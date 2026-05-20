@@ -12,7 +12,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from models.ingredient import Ingredient
-from core.preloader import ingredient_db, ingredient_by_name
+from core.preloader import ingredient_db, ingredient_by_name, ingredient_trie
+from core.search.matching import split_multi, matches_ingredient_keyword
 from models.unified import StandardResourceResponse
 
 router = APIRouter(tags=["食材库模块"])
@@ -22,21 +23,23 @@ async def list_ingredients(category: Optional[str] = None, tag: Optional[str] = 
     """获取所有食材，支持按分类、标签、适合体质和关键字(名称)筛选"""
     all_items = list(ingredient_db.values())
     
-    # 按分类筛选
-    if category:
-        all_items = [item for item in all_items if item["category"] == category]
-    
-    # 按标签筛选
+    if category and category != "全部":
+        all_items = [
+            item for item in all_items
+            if category in split_multi(item.get("category") or item.get("tag", ""))
+        ]
+
     if tag:
-        all_items = [item for item in all_items if tag in item["tag"]]
-    
-    # 按适合体质筛选
+        all_items = [item for item in all_items if tag in split_multi(item.get("tag", ""))]
+
     if suitable:
-        all_items = [item for item in all_items if suitable in item["suitable"]]
-    
-    # 关键字搜索
+        all_items = [item for item in all_items if suitable in split_multi(item.get("suitable", ""))]
+
     if keyword:
-        all_items = [item for item in all_items if keyword in item["name"] or (item.get("effect") and keyword in item["effect"])]
+        all_items = [
+            item for item in all_items
+            if matches_ingredient_keyword(item, keyword, ingredient_trie.search_prefix)
+        ]
     
     return all_items
 
