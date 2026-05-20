@@ -56,7 +56,7 @@ app.include_router(therapy.router, prefix="/api/therapy", tags=["食疗库"])
 app.include_router(recipes.router, prefix="/api/recipes", tags=["菜谱"])
 app.include_router(categories.router, prefix="/api/categories", tags=["分类详情"])
 app.include_router(graph.router, prefix="/api/graph", tags=["知识图谱"])
-app.include_router(reports.router, prefix="/api/reports", tags=["健康档案"])
+app.include_router(reports.router, prefix="/api", tags=["健康档案"])
 app.include_router(daily_report.router)
 app.include_router(assistant.router, prefix="/api/assistant", tags=["AI 食疗助手"])
 
@@ -69,6 +69,10 @@ async def serve_index():
 # 我们给它加一个判断：如果是请求 .js, .css, .svg 等文件的，绝对不返回 index.html
 @app.get("/{catchall:path}")
 async def catch_all_fallback(catchall: str):
+    # API 路径未匹配到具体路由时返回 404，避免误回退到不存在的 index.html
+    if catchall.startswith("api/"):
+        raise HTTPException(status_code=404)
+
     # 拼接物理路径
     local_path = os.path.join(STATIC_DIR, catchall)
     
