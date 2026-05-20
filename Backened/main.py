@@ -16,9 +16,11 @@ from api import reports  # 健康档案路由
 from api import daily_report # 每日健康报告
 from api import assistant  # AI 食疗助手路由
 from core.preloader import load_all_data  # 导入数据加载函数
+from core.graph_engine import init_graph
 
 # 启动时加载数据
 load_all_data()
+init_graph()
 
 app = FastAPI(title="食疗养生推荐系统 API", version="1.0.0")
 

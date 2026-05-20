@@ -80,11 +80,11 @@ class GraphEngine:
         with self._lock:
             if self.data_loaded:
                 return
-            print("🚀 Loading graph data (Cyber TCM Mode)...")
+            print("[Graph] Loading graph data...")
             try:
                 # 1. 加载食材数据
                 if self.csv_paths["shicai"].exists():
-                    df_shicai = pd.read_csv(self.csv_paths["shicai"], encoding='utf-8')
+                    df_shicai = pd.read_csv(self.csv_paths["shicai"], encoding="utf-8-sig")
                     for _, row in df_shicai.iterrows():
                         name = row['name']
                         effect_main = row.get('effect', '')
@@ -102,7 +102,7 @@ class GraphEngine:
                 
                 # 2. 加载菜谱数据 (包含君臣佐使逻辑)
                 if self.csv_paths["caipu"].exists():
-                    df_caipu = pd.read_csv(self.csv_paths["caipu"], encoding='utf-8')
+                    df_caipu = pd.read_csv(self.csv_paths["caipu"], encoding="utf-8-sig")
                     for _, row in df_caipu.iterrows():
                         recipe_name = row['name']
                         recipe_eff = row.get('effect', '')
@@ -125,9 +125,9 @@ class GraphEngine:
                             self._add_edge(recipe_name, TYPE_RECIPE, const, TYPE_CONSTITUTION, attr_u=recipe_eff, metadata_u=metadata)
                             
                 self.data_loaded = True
-                print(f"✅ Cyber Graph constructed: {len(self.nodes_info)} nodes.")
+                print(f"[Graph] Loaded {len(self.nodes_info)} nodes.")
             except Exception as e:
-                print(f"❌ Error loading cyber graph: {e}")
+                print(f"[Graph] Error loading graph: {e}")
                 self.data_loaded = False
 
     def get_subgraph(self, center_node_name, depth=1):
@@ -165,7 +165,11 @@ class GraphEngine:
             contextual_role = None
             if center_is_recipe and current_depth == 1:
                 # 从边关系中找角色
-                for neighbor, role in self.adj_list.get(center_node_name, []):
+                for edge in self.adj_list.get(center_node_name, []):
+                    if isinstance(edge, tuple):
+                        neighbor, role = edge[0], edge[1] if len(edge) > 1 else None
+                    else:
+                        neighbor, role = edge, None
                     if neighbor == current_node:
                         contextual_role = role
                         break
@@ -186,7 +190,11 @@ class GraphEngine:
 
             if current_depth < depth:
                 neighbors_with_roles = self.adj_list.get(current_node, [])
-                for neighbor, role in neighbors_with_roles:
+                for edge in neighbors_with_roles:
+                    if isinstance(edge, tuple):
+                        neighbor, role = edge[0], edge[1] if len(edge) > 1 else None
+                    else:
+                        neighbor, role = edge, None
                     # 记录边
                     edge_key = tuple(sorted((current_node, neighbor)))
                     if edge_key not in visited_edges:

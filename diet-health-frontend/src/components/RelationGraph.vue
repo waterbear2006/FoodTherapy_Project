@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import axios from 'axios'
 import { showToast } from 'vant'
@@ -44,11 +44,19 @@ const getRoleFullCN = (role) => {
 }
 
 const loadGraphData = async (nodeName, isIncremental = false) => {
+  const name = (nodeName || '').trim()
+  if (!name) return
+
   loading.value = true
   try {
-    const response = await axios.get(`/api/graph/detail?name=${encodeURIComponent(nodeName)}&depth=1`)
+    const response = await axios.get(`/api/graph/detail?name=${encodeURIComponent(name)}&depth=1`)
     const { nodes, links, categories: cats } = response.data
     categories.value = cats
+
+    if (!nodes?.length && !isIncremental) {
+      showToast('暂无关联图谱数据')
+      return
+    }
 
     if (!isIncremental) {
       allNodes.value = nodes
@@ -186,12 +194,24 @@ const initChart = () => {
 const handleResize = () => chartInstance?.resize()
 const handleKeyDown = (e) => { if (e.key === 'Escape') showPopup.value = false }
 
-onMounted(() => {
+onMounted(async () => {
   initChart()
-  if (props.centerNode) loadGraphData(props.centerNode, false)
+  if (props.centerNode) await loadGraphData(props.centerNode, false)
   window.addEventListener('resize', handleResize)
   window.addEventListener('keydown', handleKeyDown)
 })
+
+watch(
+  () => props.centerNode,
+  async (name, prev) => {
+    if (!name || name === prev) return
+    await nextTick()
+    if (!chartInstance) initChart()
+    allNodes.value = []
+    allLinks.value = []
+    await loadGraphData(name, false)
+  }
+)
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
